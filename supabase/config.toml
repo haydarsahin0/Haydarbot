@@ -1,0 +1,31 @@
+# Minimal Supabase CLI config for local dev / linking.
+# `supabase link --project-ref <ref>` then `supabase db push` to apply migrations.
+project_id = "throne-takeover"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public"]
+
+[db]
+port = 54322
+major_version = 15
+
+[realtime]
+enabled = true
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+# Stripe webhook must skip JWT verification (Stripe sends no Supabase JWT).
+[functions.stripe-webhook]
+verify_jwt = false
