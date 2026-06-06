@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>👑 Throne Takeover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --gold:#facc15; --gold-d:#a16207; --bg:#0b0a12;
+    --panel:rgba(255,255,255,.04); --border:rgba(255,255,255,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    color:#e5e7eb;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(180,127,45,.18), transparent 60%),
+      radial-gradient(900px 500px at 50% 120%, rgba(120,80,200,.12), transparent 60%),
+      var(--bg);
+    min-height:100%;
+  }
+  .display{font-family:"Cinzel",Georgia,serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:18px 16px 60px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand h1{font-size:20px;margin:0;letter-spacing:.04em}
+  .me{font-size:14px;color:#cbd5e1}
+  .me b{color:var(--gold)}
+  .panel{border:1px solid var(--border);background:var(--panel);border-radius:18px;backdrop-filter:blur(6px)}
+  .glow{box-shadow:0 0 60px -12px rgba(250,204,21,.45)}
+  .grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-top:18px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:16px}
+  .text-glow{text-shadow:0 0 18px rgba(250,204,21,.55)}
+  .tabnum{font-variant-numeric:tabular-nums}
+
+  /* throne stage */
+  .stage{padding:26px 22px;text-align:center;position:relative;overflow:hidden}
+  .ribbons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;min-height:26px}
+  .ribbon{font-size:12px;font-weight:700;border-radius:999px;padding:4px 12px}
+  .r-frenzy{background:rgba(245,158,11,.2);color:#fcd34d}
+  .r-cursed{background:rgba(217,70,239,.2);color:#f0abfc}
+  .r-frozen{background:rgba(14,165,233,.2);color:#7dd3fc}
+  .crown{width:64px;height:64px;display:block;margin:0 auto}
+  .label{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,255,255,.42);margin:14px 0 2px}
+  .ruler{font-size:34px;margin:2px 0 0;font-weight:800}
+  .points{font-size:60px;font-weight:900;margin-top:14px;line-height:1}
+  .points.curse{color:#f0abfc}
+  .points.normal{color:#fde68a}
+  .rate{font-size:13px;color:rgba(255,255,255,.5);margin-top:4px}
+  .shield{margin:16px auto 0;max-width:320px}
+  .shield .row{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.4)}
+  .bar{height:6px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:4px}
+  .bar > i{display:block;height:100%;background:var(--gold);transition:width .12s linear}
+
+  .pulse{animation:pg 2.6s ease-in-out infinite}
+  @keyframes pg{0%,100%{box-shadow:0 0 40px -12px rgba(250,204,21,.4)}50%{box-shadow:0 0 85px -6px rgba(250,204,21,.7)}}
+
+  /* take button */
+  .take{
+    width:100%;border:0;cursor:pointer;border-radius:18px;padding:22px;
+    font-family:"Cinzel",serif;font-size:26px;font-weight:900;letter-spacing:.03em;color:#1a1407;
+    background:linear-gradient(#fde68a,#d8b163);transition:transform .06s,filter .2s;
+  }
+  .take:hover:not(:disabled){filter:brightness(1.06)}
+  .take:active:not(:disabled){transform:scale(.985)}
+  .take:disabled{cursor:not-allowed;background:rgba(255,255,255,.06);color:rgba(255,255,255,.4)}
+
+  h3{font-family:"Cinzel",serif;font-size:17px;margin:0 0 10px}
+  .pad{padding:16px}
+  .muted{color:rgba(255,255,255,.4);font-size:13px}
+
+  /* feed */
+  .feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:230px;overflow:auto}
+  .feed li{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+  .feed .pos{color:#fde68a}.feed .neg{color:#f0abfc}
+
+  /* leaderboard */
+  .lb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+  .lb li{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:10px;font-size:14px}
+  .lb li.you{background:rgba(250,204,21,.10)}
+  .lb .rk{width:20px;text-align:right;color:rgba(255,255,255,.4);margin-right:8px}
+  .kings{list-style:none;margin:8px 0 0;padding:0;font-size:13px;display:flex;flex-direction:column;gap:4px}
+  .kings li{display:flex;justify-content:space-between}
+
+  /* sabotage */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .card{border:1px solid var(--border);background:rgba(255,255,255,.05);border-radius:14px;padding:10px 6px;text-align:center;cursor:pointer;transition:background .15s}
+  .card:hover:not(:disabled){background:rgba(255,255,255,.1)}
+  .card:disabled{opacity:.4;cursor:not-allowed}
+  .card .ico{font-size:22px}
+  .card .nm{font-size:13px;font-weight:700;margin-top:2px}
+  .card .ds{font-size:10px;line-height:1.2;color:rgba(255,255,255,.42);margin-top:2px}
+
+  /* subscribe */
+  .perks{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:13px;margin-top:10px}
+  .perks > div{padding:7px 10px}
+  .pf{background:#11101a;color:rgba(255,255,255,.55)}
+  .ps{background:#171327;color:#e9e3ff}
+  .perks .hf{font-weight:700;color:rgba(255,255,255,.5)}
+  .perks .hs{font-weight:700;color:#fde68a}
+  .btn{width:100%;border:0;cursor:pointer;border-radius:12px;padding:12px;font-weight:700;background:#d8b163;color:#1a1407;margin-top:12px}
+  .btn.ghost{background:rgba(255,255,255,.06);color:#e5e7eb;border:1px solid var(--border)}
+
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .toast{padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:tin .2s ease-out}
+  .toast.ok{background:rgba(16,185,129,.92);color:#04140d}
+  .toast.bad{background:rgba(244,63,94,.92);color:#fff}
+  @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+
+  footer{margin-top:34px;text-align:center;font-size:12px;color:rgba(255,255,255,.3)}
+  a{color:#fcd34d}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span id="brandCrown"></span>
+      <h1 class="display text-glow">Throne Takeover</h1>
+    </div>
+    <div class="me" id="meBar"></div>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <!-- THRONE STAGE -->
+      <div class="panel stage glow pulse" id="stage">
+        <div class="ribbons" id="ribbons"></div>
+        <span id="stageCrown"></span>
+        <div class="label" id="stageLabel">Up for grabs</div>
+        <div class="ruler display text-glow" id="ruler">The throne is empty</div>
+        <div class="points normal display tabnum" id="points" style="display:none">0</div>
+        <div class="rate" id="rate"></div>
+        <div class="shield" id="shieldWrap" style="display:none">
+          <div class="row"><span>Crown weight shield</span><span id="shieldTxt"></span></div>
+          <div class="bar"><i id="shieldBar"></i></div>
+        </div>
+      </div>
+
+      <button class="take display" id="takeBtn">TAKE THE THRONE</button>
+
+      <!-- SABOTAGE -->
+      <div class="panel pad" id="sabPanel" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">Sabotage Cards</h3>
+          <span class="muted" id="sabCd"></span>
+        </div>
+        <div class="cards" style="margin-top:10px" id="cards"></div>
+      </div>
+
+      <!-- FEED -->
+      <div class="panel pad">
+        <h3>Recent Takeovers</h3>
+        <ul class="feed" id="feed"><li class="muted">No reigns yet. Be the first king.</li></ul>
+      </div>
+    </div>
+
+    <div class="col">
+      <!-- FRENZY NOTICE -->
+      <div class="panel pad" id="frenzyNotice" style="display:none;border-color:rgba(245,158,11,.3)"></div>
+
+      <!-- LEADERBOARD -->
+      <div class="panel pad">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <h3 style="margin:0">Leaderboard</h3>
+          <span class="muted" id="seasonLbl"></span>
+        </div>
+        <ul class="lb" id="lb" style="margin-top:10px"></ul>
+        <h3 style="margin:18px 0 0;font-size:14px;color:rgba(255,255,255,.7)">👑 Eternal Kings</h3>
+        <ul class="kings" id="kings"><li class="muted">History awaits a winner.</li></ul>
+      </div>
+
+      <!-- SUBSCRIBE -->
+      <div class="panel pad" id="subPanel" style="border-color:rgba(216,177,99,.3)"></div>
+    </div>
+  </div>
+
+  <footer>
+    Status, points &amp; cosmetics only — no gambling, no payouts. Single-file demo build
+    (AI rivals, local save). The full React + Supabase + Stripe version lives in this repo.
+  </footer>
+</div>
+<div id="toast"></div>
+
+<script>
+/* =========================================================================
+   THRONE TAKEOVER — single-file playable demo
+   One global throne. Click to take it; hold it to earn points/sec. AI rivals
+   constantly try to dethrone you. All the chaos modules from the brief are
+   here, simulated entirely client-side (no server needed for this file).
+   ========================================================================= */
+
+const CFG = {
+  freeCd: 10, subCd: 3,          // cooldown seconds after losing the throne
+  subMult: 2,                    // subscriber points/sec multiplier
+  protectionSec: 2.0,            // crown-weight shield granted at takeover
+  cursedChance: 0.08,            // chance a takeover curses the throne
+  frenzyMult: 3,                 // night-frenzy points multiplier
+  mobSize: 5, mobWindow: 2000,   // 5 distinct clicks within 2s = mob overthrow
+  sabotageCd: 12,                // seconds between sabotage cards
+  freezeSec: 5, maskSec: 10, thiefCut: 0.10,
+  // demo cadences (real game uses one frenzy hour/day and 14-day seasons)
+  frenzyEvery: 95, frenzySpan: 18,   // a frenzy window every ~95s, lasting 18s
+  seasonEvery: 180,                  // a season lasts 180s in this demo
+};
+
+const CROWNS = {
+  default:{gem:'#facc15',band:'#a16207'}, ruby:{gem:'#f43f5e',band:'#7f1d1d'},
+  emerald:{gem:'#34d399',band:'#065f46'}, sapphire:{gem:'#60a5fa',band:'#1e3a8a'},
+  obsidian:{gem:'#a78bfa',band:'#312e81'},
+};
+function crownSVG(style, size){
+  const c = CROWNS[style] || CROWNS.default;
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" class="crown" style="width:${size}px;height:${size}px">
+    <path d="M3 8l4 4 5-7 5 7 4-4-2 11H5L3 8z" fill="${c.gem}" stroke="${c.band}" stroke-width="1" stroke-linejoin="round"/>
+    <rect x="5" y="19" width="14" height="2.5" rx="0.5" fill="${c.band}"/></svg>`;
+}
+
+/* ---- persistence (your progress only) ---- */
+const SAVE = 'throne_takeover_save_v1';
+const saved = JSON.parse(localStorage.getItem(SAVE) || '{}');
+
+/* ---- players: you + AI rivals ---- */
+const RIVALS = [
+  ['Sir Cedric','#f43f5e','ruby'], ['Lady Mara','#34d399','emerald'],
+  ['Baron Vex','#60a5fa','sapphire'], ['Dame Olwen','#a78bfa','obsidian'],
+  ['Lord Hawke','#fbbf24','default'], ['Reina Sol','#fb7185','ruby'],
+];
+const players = {};
+players['you'] = {
+  id:'you', name: saved.name || 'You', color: saved.color || '#facc15',
+  crown: saved.crown || 'default', isYou:true, isSub: !!saved.isSub,
+  points: saved.points || 0, cooldownUntil:0, maskUntil:0,
+  aggr:0, skill:0,
+};
+RIVALS.forEach((r,i)=>{
+  players['b'+i] = {
+    id:'b'+i, name:r[0], color:r[1], crown:r[2], isYou:false,
+    isSub: i<2,                 // a couple of rivals are subscribers
+    points:0, cooldownUntil:0, maskUntil:0,
+    aggr: 0.16 + Math.random()*0.22,   // how eager this bot is
+    skill: 0.4 + Math.random()*0.5,    // how well it times the shield
+    next: 0,
+  };
+});
+
+const throne = { holderId:null, heldSince:0, protection:0, cursed:false, frozenUntil:0 };
+const clickLog = [];      // {pid, t} — for mob detection
+const feed = [];          // {name,color,reign,pts}
+let kings = saved.kings || [];   // [{season,name,color}]
+let season = saved.season || 1;
+let seasonStart = performance.now();
+let frenzyUntil = 0, nextFrenzy = performance.now()+CFG.frenzyEvery*1000;
+let sabReadyAt = 0;
+let lastTick = performance.now();
+
+const now = ()=>performance.now();
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const frenzyActive = ()=> now() < frenzyUntil;
+
+function save(){
+  const y = players['you'];
+  localStorage.setItem(SAVE, JSON.stringify({
+    name:y.name,color:y.color,crown:y.crown,isSub:y.isSub,points:Math.round(y.points),
+    season, kings,
+  }));
+}
+
+/* ---- points rate per second for a holder ---- */
+function rate(p){
+  let r = p.isSub ? CFG.subMult : 1;
+  if (frenzyActive()) r *= CFG.frenzyMult;
+  if (throne.cursed) r *= -1;     // cursed throne drains
+  return r;
+}
+
+/* ---- the one atomic "take the throne" action ---- */
+function recentClickers(){
+  const t = now(), set = new Set();
+  for (let i=clickLog.length-1;i>=0;i--){
+    if (clickLog[i].t < t-CFG.mobWindow) break;
+    set.add(clickLog[i].pid);
+  }
+  return set.size;
+}
+function attemptTake(pid){
+  const p = players[pid], t = now();
+  clickLog.push({pid,t});
+  while (clickLog.length && clickLog[0].t < t-CFG.mobWindow*2) clickLog.shift();
+  const mob = recentClickers() >= CFG.mobSize;
+
+  if (throne.holderId === pid) return {ok:false,msg:'You already hold the throne'};
+  if (!mob && throne.frozenUntil > t) return {ok:false,msg:'The throne is frozen ❄'};
+  if (!mob && p.cooldownUntil > t) return {ok:false,msg:`On cooldown · ${Math.ceil((p.cooldownUntil-t)/1000)}s`};
+  if (!mob && throne.holderId!=null && t < throne.heldSince + throne.protection*1000)
+    return {ok:false,msg:`Throne is protected · ${Math.ceil((throne.heldSince+throne.protection*1000-t)/1000)}s`};
+
+  // close out the previous reign
+  if (throne.holderId!=null){
+    const prev = players[throne.holderId];
+    const reignS = (t - throne.heldSince)/1000;
+    prev.cooldownUntil = t + (prev.isSub?CFG.subCd:CFG.freeCd)*1000;
+    addFeed(prev, reignS);
+  }
+  // crown the new ruler
+  throne.holderId = pid;
+  throne.heldSince = t;
+  throne.protection = CFG.protectionSec;
+  throne.cursed = Math.random() < CFG.cursedChance;
+  throne.frozenUntil = 0;
+  return {ok:true, mob};
+}
+
+function addFeed(p, reignS){
+  feed.unshift({name:p.name, color:p.color, reign:reignS});
+  if (feed.length>12) feed.pop();
+}
+
+/* ---- sabotage (subscribers only) ---- */
+function useSabotage(card){
+  const y = players['you'], t = now();
+  if (!y.isSub) return toast('Subscribe to unlock sabotage cards', false);
+  if (sabReadyAt > t) return toast(`Sabotage ready in ${Math.ceil((sabReadyAt-t)/1000)}s`, false);
+
+  if (card==='freeze'){ throne.frozenUntil = t + CFG.freezeSec*1000; toast('❄ Throne frozen for 5s', true); }
+  else if (card==='thief'){
+    const h = throne.holderId;
+    if (h==null || h==='you') return toast('No rival ruler to rob', false);
+    const steal = Math.floor(players[h].points * CFG.thiefCut);
+    players[h].points -= steal; y.points += steal;
+    toast(`🦝 Stole ${fmt(steal)} points`, true);
+  }
+  else if (card==='earthquake'){
+    if (throne.holderId!=null){ addFeed(players[throne.holderId],(t-throne.heldSince)/1000); }
+    throne.holderId=null; throne.heldSince=0; throne.protection=0; throne.cursed=false; throne.frozenUntil=0;
+    toast('🌋 Earthquake! The throne is open', true);
+  }
+  else if (card==='mask'){ y.maskUntil = t + CFG.maskSec*1000; toast('🎭 Your name is hidden for 10s', true); }
+
+  sabReadyAt = t + CFG.sabotageCd*1000;
+}
+
+/* ---- AI rivals ---- */
+function botBrain(){
+  const t = now();
+  for (const id in players){
+    const p = players[id];
+    if (p.isYou) continue;
+    if (t < p.next) continue;
+    p.next = t + (400 + Math.random()*900);     // re-think cadence
+    if (throne.holderId === id) continue;        // already ruling
+    if (p.cooldownUntil > t) continue;           // waiting out cooldown
+    // skilled bots wait for the shield to drop; eager bots pile on for mobs
+    const shielded = throne.holderId!=null && t < throne.heldSince + throne.protection*1000;
+    if (shielded && Math.random() > (1-p.skill)*0.5) continue;
+    if (Math.random() < p.aggr) attemptTake(id);
+  }
+  // occasional coordinated mob rush against a long-held throne
+  if (throne.holderId!=null && (t-throne.heldSince) > 6000 && Math.random()<0.012){
+    const rivals = Object.keys(players).filter(k=>k!=='you' && k!==throne.holderId);
+    rivals.slice(0,CFG.mobSize).forEach((k,i)=> setTimeout(()=>attemptTake(k), i*120));
+  }
+}
+
+/* ---- chaos schedulers ---- */
+function chaosTick(){
+  const t = now();
+  if (t >= nextFrenzy && !frenzyActive()){
+    frenzyUntil = t + CFG.frenzySpan*1000;
+    nextFrenzy = t + CFG.frenzyEvery*1000;
+    toast(`⚡ NIGHT FRENZY — ${CFG.frenzyMult}× points!`, true);
+  }
+  if ((t - seasonStart)/1000 >= CFG.seasonEvery) endSeason();
+}
+function endSeason(){
+  // longest-reigning / highest scorer is engraved; points reset
+  const winner = Object.values(players).sort((a,b)=>b.points-a.points)[0];
+  if (winner && winner.points>0){
+    kings.unshift({season, name:winner.name, color:winner.color});
+    if (kings.length>8) kings.pop();
+    toast(`👑 Season ${season}: ${winner.name} engraved on Eternal Kings`, true);
+  }
+  season++; seasonStart = now();
+  Object.values(players).forEach(p=>p.points=0);
+  save();
+}
+
+/* ---- main loop ---- */
+function tick(){
+  const t = now(), dt = (t-lastTick)/1000; lastTick = t;
+  if (throne.holderId!=null){
+    const h = players[throne.holderId];
+    h.points = Math.max(0, h.points + rate(h)*dt);
+  }
+  botBrain();
+  chaosTick();
+  render();
+  requestAnimationFrame(tick);
+}
+
+/* ---- rendering ---- */
+function displayName(p){
+  if (!p) return null;
+  if (!p.isYou && p.maskUntil > now()) return 'A masked challenger';
+  return p.name;
+}
+function render(){
+  const t = now();
+  const h = throne.holderId!=null ? players[throne.holderId] : null;
+
+  // ribbons
+  const ribbons = [];
+  if (frenzyActive()) ribbons.push(`<span class="ribbon r-frenzy">⚡ NIGHT FRENZY · ${CFG.frenzyMult}×</span>`);
+  if (throne.cursed && h) ribbons.push(`<span class="ribbon r-cursed">☠ CURSED · draining</span>`);
+  if (throne.frozenUntil>t) ribbons.push(`<span class="ribbon r-frozen">❄ FROZEN · ${Math.ceil((throne.frozenUntil-t)/1000)}s</span>`);
+  el('ribbons').innerHTML = ribbons.join('');
+
+  el('stageCrown').innerHTML = crownSVG(h?h.crown:'default', 64);
+  el('stageCrown').firstChild.style.opacity = h?1:.3;
+  el('stageLabel').textContent = h ? 'Current Ruler' : 'Up for grabs';
+  const rl = el('ruler');
+  rl.textContent = h ? displayName(h) + (h.isYou?'  (you)':'') : 'The throne is empty';
+  rl.style.color = h && displayName(h)!=='A masked challenger' ? h.color : '#e5e7eb';
+
+  const pts = el('points');
+  if (h){
+    pts.style.display='';
+    pts.textContent = fmt(h.points);
+    pts.className = 'points display tabnum ' + (throne.cursed?'curse':'normal');
+    const r = rate(h);
+    el('rate').textContent = `${r>=0?'+':''}${r}/sec · reigning ${Math.floor((t-throne.heldSince)/1000)}s`;
+    const shieldLeft = Math.max(0, throne.protection - (t-throne.heldSince)/1000);
+    if (shieldLeft>0){
+      el('shieldWrap').style.display='';
+      el('shieldTxt').textContent = shieldLeft.toFixed(1)+'s';
+      el('shieldBar').style.width = Math.min(100, shieldLeft/CFG.protectionSec*100)+'%';
+    } else el('shieldWrap').style.display='none';
+    el('stage').classList.toggle('pulse', true);
+  } else {
+    pts.style.display='none'; el('rate').textContent=''; el('shieldWrap').style.display='none';
+    el('stage').classList.toggle('pulse', false);
+  }
+
+  // take button
+  const y = players['you'];
+  const btn = el('takeBtn');
+  const youHold = throne.holderId==='you';
+  const cd = Math.ceil((y.cooldownUntil-t)/1000);
+  const frozen = Math.ceil((throne.frozenUntil-t)/1000);
+  let disabled=false, label='TAKE THE THRONE';
+  if (youHold){ disabled=true; label='You rule 👑'; }
+  else if (cd>0){ disabled=true; label=`Cooldown · ${cd}s`; }
+  else if (frozen>0){ label=`Throne frozen · ${frozen}s`; }
+  btn.disabled = disabled; btn.textContent = label;
+
+  // me bar
+  el('meBar').innerHTML = `<b style="color:${y.color}">${y.name}</b>${y.isSub?' ⭐':''} · <b>${fmt(y.points)}</b> pts`;
+
+  // sabotage availability
+  el('sabPanel').style.display = y.isSub ? '' : 'none';
+  if (y.isSub){
+    const left = Math.ceil((sabReadyAt-t)/1000);
+    el('sabCd').textContent = left>0 ? `ready in ${left}s` : '';
+    document.querySelectorAll('.card').forEach(c=> c.disabled = (sabReadyAt>t));
+  }
+
+  // feed
+  el('feed').innerHTML = feed.length? feed.map(f=>{
+    const reign = f.reign>=60? `${Math.floor(f.reign/60)}m ${Math.floor(f.reign%60)}s` : `${Math.floor(f.reign)}s`;
+    return `<li><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+      <b style="color:${f.color}">${f.name}</b> <span class="muted">held ${reign}</span></span></li>`;
+  }).join('') : '<li class="muted">No reigns yet. Be the first king.</li>';
+
+  // leaderboard
+  el('seasonLbl').textContent = `Season ${season}`;
+  const ranked = Object.values(players).sort((a,b)=>b.points-a.points).slice(0,8);
+  el('lb').innerHTML = ranked.map((p,i)=>`
+    <li class="${p.isYou?'you':''}">
+      <span style="display:flex;align-items:center;overflow:hidden">
+        <span class="rk">${i+1}</span>
+        <span style="color:${p.color};font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+        ${p.isSub?'<span title="Subscriber">&nbsp;⭐</span>':''}
+      </span>
+      <span class="tabnum" style="color:#fde68a">${fmt(p.points)}</span>
+    </li>`).join('');
+  el('kings').innerHTML = kings.length ? kings.map(k=>`
+    <li><span class="muted">Season ${k.season}</span>
+        <span style="color:${k.color};font-weight:600">${k.name}</span></li>`).join('')
+    : '<li class="muted">History awaits a winner.</li>';
+
+  // frenzy advance notice (subscriber perk)
+  const fn = el('frenzyNotice');
+  if (y.isSub && !frenzyActive()){
+    fn.style.display='';
+    fn.innerHTML = `<span style="color:#fcd34d;font-weight:700">⚡ Patron tip:</span>
+      Next Night Frenzy (${CFG.frenzyMult}× points) in
+      <b>${Math.max(0,Math.ceil((nextFrenzy-t)/1000))}s</b>. Be holding the throne when it hits.`;
+  } else fn.style.display='none';
+}
+
+/* ---- subscribe panel ---- */
+function renderSubPanel(){
+  const y = players['you'];
+  const perks = [
+    [`${CFG.freeCd}s cooldown`, `${CFG.subCd}s cooldown — back faster`],
+    ['1× points/sec', `${CFG.subMult}× points/sec while ruling`],
+    ['Default crown', 'Custom crowns + name colors'],
+    ['No sabotage', 'Freeze · Thief · Earthquake · Mask'],
+    ['No event notice', 'Advance Night-Frenzy warnings'],
+  ];
+  el('subPanel').innerHTML = `
+    <h3>${y.isSub?'You’re a Royal Patron ⭐':'Become a Royal Patron'}</h3>
+    <div class="muted">Subscription buys in-game advantages &amp; cosmetics only — no gambling, no payouts.</div>
+    <div class="perks">
+      <div class="ps hs">Subscriber</div><div class="pf hf">Free</div>
+      ${perks.map(p=>`<div class="ps">${p[1]}</div><div class="pf">${p[0]}</div>`).join('')}
+    </div>
+    <button class="btn ${y.isSub?'ghost':''}" id="subBtn">${y.isSub?'Cancel patron (demo)':'Subscribe (demo)'}</button>
+    <div class="muted" style="margin-top:8px;font-size:11px">
+      Demo toggle — the real app uses Stripe Checkout + a signature-verified webhook.
+    </div>`;
+  el('subBtn').onclick = ()=>{
+    y.isSub = !y.isSub; save();
+    toast(y.isSub?'⭐ You are now a Royal Patron':'Patron cancelled', true);
+    renderSubPanel();
+  };
+}
+
+/* ---- helpers / wiring ---- */
+function el(id){ return document.getElementById(id); }
+function toast(msg, ok){
+  const d = document.createElement('div');
+  d.className = 'toast '+(ok?'ok':'bad'); d.textContent = msg;
+  el('toast').appendChild(d);
+  setTimeout(()=>d.remove(), 2400);
+}
+
+el('brandCrown').innerHTML = crownSVG('default', 28);
+el('cards') && (el('cards').innerHTML = [
+  ['freeze','❄','Freeze','Lock throne 5s'],
+  ['thief','🦝','Thief','Steal 10% of ruler'],
+  ['earthquake','🌋','Earthquake','Eject everyone'],
+  ['mask','🎭','Mask','Hide your name 10s'],
+].map(c=>`<button class="card" data-card="${c[0]}">
+    <div class="ico">${c[1]}</div><div class="nm">${c[2]}</div><div class="ds">${c[3]}</div></button>`).join(''));
+document.querySelectorAll('.card').forEach(b=> b.onclick = ()=>useSabotage(b.dataset.card));
+
+el('takeBtn').onclick = ()=>{
+  const r = attemptTake('you');
+  if (r.ok) toast(r.mob?'🔥 Mob overthrow — the throne is yours!':'👑 The throne is yours!', true);
+  else toast(r.msg, false);
+};
+
+// double-click your name in the me-bar to rename; shift-click to recolor (light touch)
+el('meBar').onclick = (e)=>{
+  if (!e.shiftKey) return;
+  const colors=['#facc15','#f43f5e','#34d399','#60a5fa','#a78bfa','#fb7185'];
+  const y=players['you']; y.color = colors[(colors.indexOf(y.color)+1)%colors.length]; save();
+};
+
+renderSubPanel();
+setInterval(save, 5000);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
