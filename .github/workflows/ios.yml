@@ -137,6 +137,16 @@ jobs:
           sleep 8
           xcrun simctl io "$UDID" screenshot screenshots/02-defter-koyu-tema.png
 
+          # İngilizce: çeviri kataloğunun gerçekten derlemeye girdiğini
+          # doğrular. Katalog dahil edilmezse her şey sessizce Türkçe kalır
+          # ve bu ancak kullanıcı fark edince anlaşılır.
+          xcrun simctl terminate "$UDID" com.haydarsahin.gunluk || true
+          xcrun simctl ui "$UDID" appearance light
+          xcrun simctl launch "$UDID" com.haydarsahin.gunluk \
+            -AppleLanguages '(en)' -AppleLocale en_US
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshots/03-ingilizce.png
+
       # Açılışta çökme, ekran görüntüsünde yalnızca ana ekran olarak görünüyor
       # ve sessizce geçiyordu. Çökme raporu varsa iş kırmızıya dönsün.
       - name: Çökme raporu var mı
