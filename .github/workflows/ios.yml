@@ -1,0 +1,110 @@
+name: iOS
+
+# Bu depoda Mac yok; derleme ve ekran görüntüleri GitHub'ın macOS makinelerinde
+# alınıyor. Depo herkese açık olduğu için bu makineler ücretsiz.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Derle
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ortam
+        run: |
+          xcodebuild -version
+          xcodebuild -list -project Gunluk.xcodeproj
+
+      - name: Derle (iOS Simulator)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Gunluk.xcodeproj \
+            -scheme Gunluk \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
+
+  screenshots:
+    name: Ekran görüntüsü
+    runs-on: macos-latest
+    needs: build
+    # Görüntü alma takılırsa PR kırmızıya dönmesin; asıl sinyal derleme işi.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Simülatör seç ve başlat
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          picked = ''
+          for runtime, devs in devices.items():
+              if 'iOS' not in runtime:
+                  continue
+              for dev in devs:
+                  if dev.get('isAvailable') and dev['name'].startswith('iPhone'):
+                      picked = dev['udid']
+          print(picked)
+          ")
+          if [ -z "$UDID" ]; then
+            echo 'Kullanılabilir iPhone simülatörü bulunamadı.'
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Simülatör için derle
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Gunluk.xcodeproj \
+            -scheme Gunluk \
+            -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Kur, başlat ve görüntü al
+        run: |
+          set -euo pipefail
+          UDID="${{ steps.sim.outputs.udid }}"
+          APP=$(find build/Build/Products/Debug-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
+          echo "Uygulama: $APP"
+
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p screenshots
+
+          # Açık tema
+          xcrun simctl ui "$UDID" appearance light
+          xcrun simctl launch "$UDID" com.haydarsahin.gunluk
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshots/01-defter-acik-tema.png
+
+          # Koyu tema
+          xcrun simctl terminate "$UDID" com.haydarsahin.gunluk || true
+          xcrun simctl ui "$UDID" appearance dark
+          xcrun simctl launch "$UDID" com.haydarsahin.gunluk
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshots/02-defter-koyu-tema.png
+
+      - name: Görüntüleri yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ekran-goruntuleri
+          path: screenshots/
+          if-no-files-found: warn
