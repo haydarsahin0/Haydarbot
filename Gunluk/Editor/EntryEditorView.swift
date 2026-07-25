@@ -8,6 +8,7 @@ struct EntryEditorView: View {
 
     let day: Int
     @ObservedObject var store: DiaryStore
+    @ObservedObject var photos: PhotoStore
     let onClose: @MainActor () -> Void
 
     @State private var text: String = ""
@@ -27,6 +28,10 @@ struct EntryEditorView: View {
                     VStack(alignment: .leading, spacing: 22) {
                         dateHeader
                         writingArea
+                        PhotoSection(day: day,
+                                     store: store,
+                                     photos: photos,
+                                     isEnabled: isEditable)
                         questionsSection
                         if isEditable { footerNote }
                     }

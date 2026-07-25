@@ -1,6 +1,6 @@
 import Foundation
 
-/// Bir güne ait günlük kaydı: serbest metin + soruların puanları.
+/// Bir güne ait günlük kaydı: serbest metin, soruların puanları ve fotoğraflar.
 struct DiaryEntry: Codable, Identifiable, Equatable, Sendable {
 
     /// `"yyyy-MM-dd"` — diskteki kalıcı kimlik.
@@ -8,6 +8,9 @@ struct DiaryEntry: Codable, Identifiable, Equatable, Sendable {
     var text: String
     /// Soru kimliği -> 1...100 arası puan.
     var ratings: [String: Int]
+    /// O güne eklenen fotoğrafların kimlikleri, eklenme sırasına göre.
+    /// Görsellerin kendisi `PhotoStore` tarafından ayrı dosyalarda tutuluyor.
+    var photoIDs: [String]
     var createdAt: Date
     var updatedAt: Date
 
@@ -16,25 +19,45 @@ struct DiaryEntry: Codable, Identifiable, Equatable, Sendable {
     init(dateKey: String,
          text: String = "",
          ratings: [String: Int] = [:],
+         photoIDs: [String] = [],
          createdAt: Date = Date(),
          updatedAt: Date = Date()) {
         self.dateKey = dateKey
         self.text = text
         self.ratings = ratings
+        self.photoIDs = photoIDs
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
 
+    // Eski sürümlerde `photoIDs` yoktu. Codable'ın ürettiği çözümleyici eksik
+    // anahtarda hata verdiği için elle yazılıyor; böylece güncelleme sonrası
+    // kullanıcının mevcut günlüğü okunmaya devam ediyor.
+    private enum CodingKeys: String, CodingKey {
+        case dateKey, text, ratings, photoIDs, createdAt, updatedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        dateKey = try container.decode(String.self, forKey: .dateKey)
+        text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
+        ratings = try container.decodeIfPresent([String: Int].self, forKey: .ratings) ?? [:]
+        photoIDs = try container.decodeIfPresent([String].self, forKey: .photoIDs) ?? []
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? Date()
+    }
+
     var isEmpty: Bool {
-        text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && ratings.isEmpty
+        text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && ratings.isEmpty
+            && photoIDs.isEmpty
     }
 
     var hasText: Bool {
         !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    /// Sorulardan kaçının puanlandığı.
-    var ratedQuestionCount: Int { ratings.count }
+    var hasPhotos: Bool { !photoIDs.isEmpty }
 }
 
 /// Diskteki dosyanın kök yapısı. `version` ileride biçim değişirse göç için.
@@ -42,7 +65,7 @@ struct DiaryArchive: Codable, Sendable {
     var version: Int
     var entries: [DiaryEntry]
 
-    init(version: Int = 1, entries: [DiaryEntry] = []) {
+    init(version: Int = 2, entries: [DiaryEntry] = []) {
         self.version = version
         self.entries = entries
     }

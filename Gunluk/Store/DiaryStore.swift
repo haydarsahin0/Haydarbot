@@ -95,6 +95,28 @@ final class DiaryStore: ObservableObject {
         }
     }
 
+    func addPhoto(id: String, for day: Int) {
+        mutate(day: day) { entry in
+            guard !entry.photoIDs.contains(id) else { return false }
+            entry.photoIDs.append(id)
+            return true
+        }
+    }
+
+    func removePhoto(id: String, for day: Int) {
+        mutate(day: day) { entry in
+            guard let index = entry.photoIDs.firstIndex(of: id) else { return false }
+            entry.photoIDs.remove(at: index)
+            return true
+        }
+    }
+
+    /// Kayıtlarda geçen tüm fotoğraf kimlikleri — artık kullanılmayan
+    /// dosyaları temizlemek için.
+    var allPhotoIDs: Set<String> {
+        Set(entries.values.flatMap { $0.photoIDs })
+    }
+
     func removeRating(question: RatingQuestion, for day: Int) {
         mutate(day: day) { entry in
             guard entry.ratings[question.id] != nil else { return false }
@@ -193,6 +215,43 @@ final class DiaryStore: ObservableObject {
         }
         savedStateReset = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
+    }
+
+    // MARK: - Grafik hesapları
+
+    /// Verilen aralıkta o soruya verilmiş puanlar, tarihe göre sıralı.
+    func trendPoints(for question: RatingQuestion, in range: TrendRange) -> [TrendPoint] {
+        let today = DayIndex.today
+        let start = today - range.days + 1
+
+        return (start...today).compactMap { day in
+            guard let value = entries[day]?.ratings[question.id] else { return nil }
+            return TrendPoint(day: day, value: value)
+        }
+    }
+
+    /// Haftanın her günü için ortalama puan. Hiç puanlanmamış günler
+    /// ortalamayı aşağı çekmesin diye sayıma girmiyor.
+    func weekdayAverages(for question: RatingQuestion, in range: TrendRange) -> [WeekdayAverage] {
+        var totals: [Int: (sum: Int, count: Int)] = [:]
+
+        for point in trendPoints(for: question, in: range) {
+            let weekday = DayIndex.calendar.component(.weekday, from: point.date)
+            let current = totals[weekday] ?? (0, 0)
+            totals[weekday] = (current.sum + point.value, current.count + 1)
+        }
+
+        // Pazartesiden pazara sırala (Gregoryen takvimde 1 = Pazar).
+        let order = [2, 3, 4, 5, 6, 7, 1]
+        let labels = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+
+        return zip(order, labels).map { weekday, label in
+            let entry = totals[weekday]
+            let average = (entry?.count ?? 0) > 0
+                ? Double(entry!.sum) / Double(entry!.count)
+                : 0
+            return WeekdayAverage(weekday: weekday, label: label, average: average)
+        }
     }
 
     // MARK: - Dışa aktarma

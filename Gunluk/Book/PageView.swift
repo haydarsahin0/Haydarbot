@@ -11,6 +11,8 @@ struct PageView: View {
     let day: Int
     let entry: DiaryEntry?
     let side: PageSide
+    /// Sayfada fotoğraf küçüğü göstermek için; yoksa sayfa yalnızca yazı gösterir.
+    var photos: PhotoStore? = nil
 
     private var isToday: Bool { DayIndex.isToday(day) }
     private var isFuture: Bool { DayIndex.isFuture(day) }
@@ -38,6 +40,7 @@ struct PageView: View {
             .frame(width: size.width, height: size.height, alignment: .topLeading)
         }
         .background(paperBackground)
+        .overlay(alignment: .bottomTrailing) { photoCorner }
         .overlay { spineShading }
         .overlay(alignment: side == .left ? .topLeading : .topTrailing) { todayRibbon }
         .clipShape(shape)
@@ -85,6 +88,28 @@ struct PageView: View {
                 .padding(.top, 10)
                 .padding(side == .left ? .leading : .trailing, 14)
                 .opacity(0.9)
+        }
+    }
+
+    /// Fotoğraflı günlerde sayfanın köşesine bantlanmış gibi duran küçük kare.
+    @ViewBuilder
+    private var photoCorner: some View {
+        if let photos, let first = entry?.photoIDs.first,
+           let image = photos.thumbnail(first) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 26, height: 32)
+                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.85), lineWidth: 1.5)
+                )
+                .shadow(color: .black.opacity(0.22), radius: 2, y: 1)
+                .rotationEffect(.degrees(side == .left ? -5 : 5))
+                .padding(.trailing, 10)
+                .padding(.bottom, 10)
+                .allowsHitTesting(false)
         }
     }
 

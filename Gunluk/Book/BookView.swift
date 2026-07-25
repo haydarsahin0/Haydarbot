@@ -21,6 +21,7 @@ struct BookView: View {
     /// Ok düğmelerinden gelen çevirme isteği; uygulanınca `nil`'e çekilir.
     @Binding var command: BookCommand?
     let store: DiaryStore
+    let photos: PhotoStore
     /// Bir sayfaya dokunulduğunda: gün numarası ve dokunulan taraf.
     let onSelectDay: @MainActor (Int, PageSide) -> Void
 
@@ -131,7 +132,7 @@ struct BookView: View {
     }
 
     private func page(day: Int, side: PageSide) -> some View {
-        PageView(day: day, entry: store.entry(for: day), side: side)
+        PageView(day: day, entry: store.entry(for: day), side: side, photos: photos)
     }
 
     // MARK: - Dönen yaprak

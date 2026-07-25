@@ -6,6 +6,9 @@ import SwiftUI
 struct RootView: View {
 
     @EnvironmentObject private var store: DiaryStore
+    @EnvironmentObject private var photos: PhotoStore
+    @EnvironmentObject private var lock: AppLock
+    @EnvironmentObject private var reminders: Reminders
 
     @State private var spread: Int = SpreadIndex.spread(for: DayIndex.today)
     @State private var command: BookCommand?
@@ -13,6 +16,7 @@ struct RootView: View {
     @State private var openAnchor: UnitPoint = .center
     @State private var showsDatePicker = false
     @State private var showsSettings = false
+    @State private var showsTrends = false
     @State private var jumpDate = Date()
 
     var body: some View {
@@ -28,6 +32,7 @@ struct RootView: View {
                     spread: $spread,
                     command: $command,
                     store: store,
+                    photos: photos,
                     onSelectDay: openDay(_:side:)
                 )
                 .padding(.horizontal, 18)
@@ -37,7 +42,10 @@ struct RootView: View {
             }
 
             if let selectedDay {
-                EntryEditorView(day: selectedDay, store: store, onClose: closeEditor)
+                EntryEditorView(day: selectedDay,
+                                store: store,
+                                photos: photos,
+                                onClose: closeEditor)
                     .transition(
                         .scale(scale: 0.92, anchor: openAnchor).combined(with: .opacity)
                     )
@@ -45,8 +53,14 @@ struct RootView: View {
             }
         }
         .sheet(isPresented: $showsDatePicker) { datePickerSheet }
+        .sheet(isPresented: $showsTrends) {
+            TrendsView(store: store)
+        }
         .sheet(isPresented: $showsSettings) {
-            SettingsView(store: store)
+            SettingsView(store: store,
+                         photos: photos,
+                         lock: lock,
+                         reminders: reminders)
         }
     }
 
@@ -84,6 +98,12 @@ struct RootView: View {
 
             Menu {
                 Button {
+                    showsTrends = true
+                } label: {
+                    Label("Puanların", systemImage: "chart.line.uptrend.xyaxis")
+                }
+
+                Button {
                     jumpDate = DayIndex.date(for: SpreadIndex.leftDay(of: spread))
                     showsDatePicker = true
                 } label: {
@@ -93,7 +113,7 @@ struct RootView: View {
                 Button {
                     showsSettings = true
                 } label: {
-                    Label("Günlük hakkında", systemImage: "gearshape")
+                    Label("Ayarlar", systemImage: "gearshape")
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
