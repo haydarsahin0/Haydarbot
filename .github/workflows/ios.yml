@@ -108,3 +108,18 @@ jobs:
           name: ekran-goruntuleri
           path: screenshots/
           if-no-files-found: warn
+
+      # Artifact'ı indirmek için GitHub arayüzüne girmek gerekiyor. Tasarımın
+      # doğru çıkıp çıkmadığını iş kaydından da görebilmek için küçültülmüş
+      # birer kopya base64 olarak buraya basılıyor.
+      - name: Görüntüleri iş kaydına bas
+        run: |
+          set -euo pipefail
+          for f in screenshots/*.png; do
+            name=$(basename "$f" .png)
+            sips -s format jpeg -s formatOptions 55 -Z 360 "$f" \
+              --out "/tmp/$name.jpg" >/dev/null
+            echo "===== GORUNTU BASLA $name.jpg ====="
+            base64 -i "/tmp/$name.jpg"
+            echo "===== GORUNTU BITIS $name.jpg ====="
+          done
