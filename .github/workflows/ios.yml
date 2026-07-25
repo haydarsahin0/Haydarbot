@@ -35,6 +35,33 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
 
+  playgrounds:
+    name: Swift Playgrounds sürümü
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Üretilen sürüm güncel mi
+        run: |
+          ./Tools/make-swiftpm.sh
+          if ! git diff --quiet -- Gunluk.swiftpm; then
+            echo "Gunluk.swiftpm kaynaklarla aynı değil. Yerelde"
+            echo "./Tools/make-swiftpm.sh çalıştırıp sonucu işleyin."
+            git diff --stat -- Gunluk.swiftpm
+            exit 1
+          fi
+          echo "Güncel."
+
+      - name: Derle
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -scheme "Günlük" \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath /tmp/swiftpm-build \
+            CODE_SIGNING_ALLOWED=NO
+        working-directory: Gunluk.swiftpm
+
   screenshots:
     name: Ekran görüntüsü
     runs-on: macos-latest
