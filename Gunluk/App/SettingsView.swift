@@ -167,6 +167,7 @@ struct SettingsView: View {
     private var cloudStatusText: String {
         switch cloud.status {
         case .disabled: return "kapalı"
+        case .unavailable: return "iCloud hesabı yok"
         case .waiting: return "bekliyor"
         case .syncing: return "eşitleniyor…"
         case .synced(let date):

@@ -24,6 +24,8 @@ final class CloudSync: NSObject, ObservableObject {
 
     enum Status: Equatable {
         case disabled
+        /// iCloud hesabı yok ya da uygulamanın CloudKit yetkisi yok.
+        case unavailable
         case waiting
         case syncing
         case synced(Date)
@@ -35,7 +37,7 @@ final class CloudSync: NSObject, ObservableObject {
         didSet {
             UserDefaults.standard.set(isEnabled, forKey: Keys.enabled)
             if isEnabled {
-                start()
+                Task { await syncNow() }
             } else {
                 engine = nil
                 status = .disabled
@@ -57,7 +59,9 @@ final class CloudSync: NSObject, ObservableObject {
     private let zoneID = CKRecordZone.ID(zoneName: CloudSync.zoneName,
                                          ownerName: CKCurrentUserDefaultName)
 
-    private let container = CKContainer(identifier: "iCloud.com.haydarsahin.gunluk")
+    /// Tembel: CloudKit'e ilk dokunuş `start()` içinde, yalnızca hesabın
+    /// varlığı doğrulandıktan sonra oluyor.
+    private lazy var container = CKContainer(identifier: "iCloud.com.haydarsahin.gunluk")
     private unowned let store: DiaryStore
     private unowned let photos: PhotoStore
     private var engine: CKSyncEngine?
@@ -68,18 +72,28 @@ final class CloudSync: NSObject, ObservableObject {
         let enabled = UserDefaults.standard.object(forKey: Keys.enabled) as? Bool ?? true
         self.isEnabled = enabled
         super.init()
-
-        if enabled {
-            start()
-        } else {
-            status = .disabled
-        }
+        status = enabled ? .waiting : .disabled
+        // Motor burada kurulmuyor. CloudKit'e dokunmak, uygulamanın iCloud
+        // yetkisi yoksa Objective-C istisnası fırlatıyor ve bu Swift'te
+        // yakalanamıyor — uygulama daha ilk kareyi çizmeden çöker. Kurulum
+        // arayüz ayağa kalktıktan sonra, `syncNow()` üzerinden yapılıyor.
     }
 
     // MARK: - Kurulum
 
+    /// Cihazda iCloud hesabı var mı. Bu çağrı CloudKit'e dokunmuyor, bu
+    /// yüzden yetki yokken bile güvenli; hesap yoksa zaten eşitlenecek bir
+    /// yer de yok.
+    private var isCloudAvailable: Bool {
+        FileManager.default.ubiquityIdentityToken != nil
+    }
+
     private func start() {
-        guard engine == nil else { return }
+        guard engine == nil, isEnabled else { return }
+        guard isCloudAvailable else {
+            status = .unavailable
+            return
+        }
         status = .waiting
 
         let configuration = CKSyncEngine.Configuration(
@@ -134,7 +148,9 @@ final class CloudSync: NSObject, ObservableObject {
 
     /// Uygulama öne geldiğinde elle bir tur eşitleme.
     func syncNow() async {
-        guard isEnabled, let engine else { return }
+        guard isEnabled else { return }
+        if engine == nil { start() }
+        guard let engine else { return }
         status = .syncing
         do {
             try await engine.fetchChanges()

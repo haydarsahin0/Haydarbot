@@ -39,8 +39,6 @@ jobs:
     name: Ekran görüntüsü
     runs-on: macos-latest
     needs: build
-    # Görüntü alma takılırsa PR kırmızıya dönmesin; asıl sinyal derleme işi.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -101,6 +99,22 @@ jobs:
           xcrun simctl launch "$UDID" com.haydarsahin.gunluk
           sleep 8
           xcrun simctl io "$UDID" screenshot screenshots/02-defter-koyu-tema.png
+
+      # Açılışta çökme, ekran görüntüsünde yalnızca ana ekran olarak görünüyor
+      # ve sessizce geçiyordu. Çökme raporu varsa iş kırmızıya dönsün.
+      - name: Çökme raporu var mı
+        run: |
+          set -uo pipefail
+          REPORTS=$(find ~/Library/Logs/DiagnosticReports -iname "*Gunluk*" 2>/dev/null || true)
+          if [ -n "$REPORTS" ]; then
+            echo "Uygulama açılışta çöktü:"
+            for r in $REPORTS; do
+              echo "----- $r -----"
+              head -60 "$r"
+            done
+            exit 1
+          fi
+          echo "Çökme raporu yok."
 
       - name: Görüntüleri yükle
         uses: actions/upload-artifact@v4
