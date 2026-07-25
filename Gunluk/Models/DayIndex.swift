@@ -83,6 +83,11 @@ enum DayIndex {
         return formatter.string(from: date(for: index)).capitalizedFirst
     }
 
+    /// "2026"
+    static func year(_ index: Int) -> String {
+        String(calendar.component(.year, from: date(for: index)))
+    }
+
     /// "25"
     static func dayNumber(_ index: Int) -> String {
         String(calendar.component(.day, from: date(for: index)))

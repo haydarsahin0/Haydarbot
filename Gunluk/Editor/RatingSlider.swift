@@ -167,13 +167,14 @@ struct RatingSlider: View {
     }
 
     private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 20, style: .continuous)
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
             .fill(Theme.paper)
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .strokeBorder(Theme.paperEdge, lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.05), radius: 8, y: 3)
+            .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
+            .shadow(color: .black.opacity(0.03), radius: 2, y: 1)
     }
 
     // MARK: - Sürükleme

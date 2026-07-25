@@ -27,6 +27,13 @@ struct EntryEditorView: View {
 
             VStack(spacing: 0) {
                 toolbar
+                    .background(.ultraThinMaterial)
+                    .overlay(alignment: .bottom) {
+                        Rectangle()
+                            .fill(Theme.paperEdge.opacity(0.6))
+                            .frame(height: 0.5)
+                    }
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
                         dateHeader
@@ -60,14 +67,16 @@ struct EntryEditorView: View {
     private var toolbar: some View {
         HStack {
             Button(action: close) {
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 14, weight: .bold))
                     Text("Defter")
                         .font(.system(size: 16, weight: .medium, design: .rounded))
                 }
                 .foregroundStyle(Theme.accent)
+                .padding(.trailing, 4)
             }
+            .buttonStyle(PressableButtonStyle())
             .accessibilityLabel("Deftere dön")
 
             Spacer()
@@ -96,9 +105,9 @@ struct EntryEditorView: View {
                 .tracking(1.6)
                 .foregroundStyle(Theme.inkFaint)
 
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 11) {
                 Text(DayIndex.dayNumber(day))
-                    .font(.system(size: 46, weight: .bold, design: .serif))
+                    .font(.system(size: 52, weight: .bold, design: .serif))
                     .foregroundStyle(Theme.ink)
 
                 Text(DayIndex.weekday(day))
@@ -122,14 +131,15 @@ struct EntryEditorView: View {
 
     private var writingArea: some View {
         ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(Theme.paper)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(isWriting ? Theme.accent.opacity(0.45) : Theme.paperEdge,
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(isWriting ? Theme.accent.opacity(0.5) : Theme.paperEdge,
                                       lineWidth: isWriting ? 1.5 : 1)
                 )
-                .shadow(color: .black.opacity(0.05), radius: 8, y: 3)
+                .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
+                .shadow(color: .black.opacity(0.03), radius: 2, y: 1)
 
             if text.isEmpty {
                 Text(isEditable ? "Bugün neler oldu?" : "Bu gün henüz gelmedi.")

@@ -30,7 +30,11 @@ struct BookView: View {
     @State private var isAnimating = false
 
     /// Açık defterin en/boy oranı (iki sayfa yan yana).
-    static let aspectRatio: CGFloat = 1.42
+    ///
+    /// Tek sayfa 0.64 — gerçek bir cep defterinin oranı (90×140 mm). Önceki
+    /// 0.71 daha kare bir defter veriyordu ve telefonun uzun ekranında
+    /// ortada küçük kalıyordu.
+    static let aspectRatio: CGFloat = 1.28
 
     var body: some View {
         GeometryReader { geo in
@@ -41,8 +45,9 @@ struct BookView: View {
                 // yaprakla aynı katmanda olsaydı 3B dönüşüm sırasında
                 // bozuluyordu.
                 pageStackEdges(size: size)
-                    .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: 14)
-                    .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 2)
+                    .shadow(color: .black.opacity(0.13), radius: 40, x: 0, y: 24)
+                    .shadow(color: .black.opacity(0.10), radius: 14, x: 0, y: 8)
+                    .shadow(color: .black.opacity(0.07), radius: 2, x: 0, y: 1)
 
                 spreadContent(size: size)
             }
@@ -95,6 +100,8 @@ struct BookView: View {
     private func spreadContent(size: CGSize) -> some View {
         let half = size.width / 2
 
+        let lift = sin(abs(turn) * .pi)
+
         return ZStack(alignment: .topLeading) {
             page(day: leftBaseDay, side: .left)
                 .frame(width: half, height: size.height)
@@ -105,7 +112,16 @@ struct BookView: View {
                 .offset(x: half)
                 .onTapGesture { select(day: rightBaseDay, side: .right) }
 
+            // Havadaki yaprağın sabit sayfalara düşürdüğü gölge. Yaprağın
+            // kendi katmanının altında, sayfaların üstünde duruyor.
             if turn != 0 {
+                castShadow(on: .left, lift: lift)
+                    .frame(width: half, height: size.height)
+
+                castShadow(on: .right, lift: lift)
+                    .frame(width: half, height: size.height)
+                    .offset(x: half)
+
                 leaf()
                     .frame(width: half, height: size.height)
                     .offset(x: turn > 0 ? half : 0)
@@ -155,15 +171,20 @@ struct BookView: View {
                 .opacity(showingBack ? 1 : 0)
         }
         .overlay { leafShading(forward: forward, lift: lift) }
-        .shadow(color: .black.opacity(0.28 * lift),
-                radius: 20 * lift,
-                x: (forward ? -16 : 16) * lift,
-                y: 8 * lift)
+        .overlay { leafSheen(progress: progress, forward: forward, lift: lift) }
+        .overlay { leafCurl(forward: forward, lift: lift) }
+        // Sayfa kalkarken göze bir parça yaklaşıyor. Çok az, ama kağıdın
+        // düzlemden ayrıldığı hissini veren şey bu.
+        .scaleEffect(1 + 0.035 * lift)
+        .shadow(color: .black.opacity(0.32 * lift),
+                radius: 26 * lift,
+                x: (forward ? -18 : 18) * lift,
+                y: 10 * lift)
         .rotation3DEffect(
             .degrees(angle),
             axis: (x: 0, y: 1, z: 0),
             anchor: forward ? .leading : .trailing,
-            perspective: 0.38
+            perspective: 0.42
         )
     }
 
@@ -174,9 +195,66 @@ struct BookView: View {
     /// kenarında kalır — gölge de sayfa yüzü değişse bile yer değiştirmez.
     private func leafShading(forward: Bool, lift: Double) -> some View {
         LinearGradient(
-            colors: [Color.black.opacity(0.22 * lift), Color.black.opacity(0.02 * lift)],
+            stops: [
+                .init(color: .black.opacity(0.30 * lift), location: 0),
+                .init(color: .black.opacity(0.10 * lift), location: 0.35),
+                .init(color: .black.opacity(0), location: 1)
+            ],
             startPoint: forward ? .leading : .trailing,
             endPoint: forward ? .trailing : .leading
+        )
+        .allowsHitTesting(false)
+    }
+
+    /// Sayfa döndükçe üzerinden geçen ışık bandı. Kağıdın parlak yüzeyinin
+    /// ışığı yakalaması; hareketi asıl "pahalı" gösteren ayrıntı bu.
+    private func leafSheen(progress: Double, forward: Bool, lift: Double) -> some View {
+        // Bant, çevirme boyunca sayfanın bir ucundan diğerine yürüyor.
+        let center = forward ? progress : 1 - progress
+        let width = 0.30
+
+        return LinearGradient(
+            stops: [
+                .init(color: .white.opacity(0), location: max(0, center - width)),
+                .init(color: .white.opacity(0.55 * lift), location: min(1, max(0, center))),
+                .init(color: .white.opacity(0), location: min(1, center + width))
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+        .blendMode(.softLight)
+        .allowsHitTesting(false)
+    }
+
+    /// Serbest kenardaki kıvrım: kağıt sırttan uzaklaştıkça hafifçe bükülüyor,
+    /// dış kenarında ince bir gölge birikiyor.
+    private func leafCurl(forward: Bool, lift: Double) -> some View {
+        LinearGradient(
+            stops: [
+                .init(color: .black.opacity(0), location: 0.78),
+                .init(color: .black.opacity(0.06 * lift), location: 0.93),
+                .init(color: .black.opacity(0.16 * lift), location: 1)
+            ],
+            startPoint: forward ? .leading : .trailing,
+            endPoint: forward ? .trailing : .leading
+        )
+        .allowsHitTesting(false)
+    }
+
+    /// Havadaki yaprağın altındaki sayfalara düşürdüğü gölge.
+    ///
+    /// Yaprağın kendi gölgesi onunla birlikte döndüğü için alttaki kağıda
+    /// düşen izi vermiyor; bu katman sabit duran sayfaların üzerinde, sırta
+    /// yakın tarafta duruyor ve çevirmenin ortasında en koyu hâline geliyor.
+    private func castShadow(on side: PageSide, lift: Double) -> some View {
+        LinearGradient(
+            stops: [
+                .init(color: .black.opacity(0.26 * lift), location: 0),
+                .init(color: .black.opacity(0.08 * lift), location: 0.30),
+                .init(color: .black.opacity(0), location: 0.62)
+            ],
+            startPoint: side == .left ? .trailing : .leading,
+            endPoint: side == .left ? .leading : .trailing
         )
         .allowsHitTesting(false)
     }

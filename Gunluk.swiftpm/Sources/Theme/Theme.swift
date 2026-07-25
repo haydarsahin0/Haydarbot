@@ -93,3 +93,18 @@ enum PageSide {
     case left
     case right
 }
+
+/// Dokunulduğunda hafifçe içeri çöken düğme.
+///
+/// Sistem düğmelerinin varsayılan solma efekti bu tasarımda cansız kalıyor;
+/// küçük bir ölçek değişimi dokunuşa fiziksel bir karşılık veriyor.
+struct PressableButtonStyle: ButtonStyle {
+    var scale: CGFloat = 0.92
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .animation(.spring(response: 0.28, dampingFraction: 0.6),
+                       value: configuration.isPressed)
+    }
+}

@@ -39,10 +39,10 @@ struct RootView: View {
                     photos: photos,
                     onSelectDay: openDay(_:side:)
                 )
-                .padding(.horizontal, 18)
+                .padding(.horizontal, 10)
 
                 pageControls
-                    .padding(.bottom, 10)
+                    .padding(.bottom, 14)
             }
 
             if let selectedDay {
@@ -76,32 +76,49 @@ struct RootView: View {
     // MARK: - Üst çubuk
 
     private var topBar: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(DayIndex.monthAndYear(SpreadIndex.leftDay(of: spread)))
-                    .font(.system(size: 22, weight: .bold, design: .serif))
-                    .foregroundStyle(Theme.ink)
-                    .contentTransition(.opacity)
-                    .animation(.easeInOut(duration: 0.25), value: spread)
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                // Ay kalın, yıl ince: aynı satırda iki ağırlık, başlığa
+                // sakin bir hiyerarşi veriyor.
+                HStack(alignment: .firstTextBaseline, spacing: 7) {
+                    Text(DayIndex.month(SpreadIndex.leftDay(of: spread)))
+                        .font(.system(size: 27, weight: .bold, design: .serif))
+                        .foregroundStyle(Theme.ink)
+
+                    Text(DayIndex.year(SpreadIndex.leftDay(of: spread)))
+                        .font(.system(size: 19, weight: .regular, design: .serif))
+                        .foregroundStyle(Theme.inkFaint)
+                }
+                .contentTransition(.opacity)
+                .animation(.easeInOut(duration: 0.28), value: spread)
 
                 if store.streak > 1 {
-                    Text("\(store.streak) gündür yazıyorsun")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundStyle(Theme.inkFaint)
+                    HStack(spacing: 4) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 9, weight: .semibold))
+                        Text("\(store.streak) gün")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Theme.accentSoft))
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
             if spread != SpreadIndex.spread(for: DayIndex.today) {
                 Button(action: goToToday) {
                     Text("Bugün")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
+                        .padding(.horizontal, 13)
+                        .padding(.vertical, 8)
                         .background(Capsule().fill(Theme.accentSoft))
                 }
+                .buttonStyle(PressableButtonStyle())
                 .transition(.opacity.combined(with: .scale(scale: 0.85)))
             }
 
@@ -125,31 +142,35 @@ struct RootView: View {
                     Label("Ayarlar", systemImage: "gearshape")
                 }
             } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 20, weight: .medium))
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Theme.inkSoft)
                     .frame(width: 36, height: 36)
+                    .background(Circle().fill(.ultraThinMaterial))
+                    .overlay(Circle().strokeBorder(Theme.paperEdge.opacity(0.6), lineWidth: 0.5))
             }
             .accessibilityLabel("Seçenekler")
         }
-        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: spread)
+        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: spread)
     }
 
     // MARK: - Sayfa okları
 
     private var pageControls: some View {
-        HStack(spacing: 26) {
+        HStack(spacing: 4) {
             arrowButton(systemName: "chevron.left",
                         label: "Önceki günler",
                         enabled: spread > SpreadIndex.minSpread) {
                 command = .backward
             }
 
-            Text("\(DayIndex.dayNumber(SpreadIndex.leftDay(of: spread))) – \(DayIndex.dayNumber(SpreadIndex.rightDay(of: spread)))")
+            Text(spreadRangeText)
                 .font(.system(size: 13, weight: .medium, design: .rounded))
                 .monospacedDigit()
-                .foregroundStyle(Theme.inkFaint)
-                .frame(minWidth: 70)
+                .foregroundStyle(Theme.inkSoft)
+                .frame(minWidth: 92)
+                .contentTransition(.opacity)
+                .animation(.easeInOut(duration: 0.2), value: spread)
 
             arrowButton(systemName: "chevron.right",
                         label: "Sonraki günler",
@@ -157,7 +178,23 @@ struct RootView: View {
                 command = .forward
             }
         }
-        .padding(.top, 4)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 5)
+        .background(
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.07), radius: 10, y: 4)
+        )
+        .overlay(
+            Capsule().strokeBorder(Theme.paperEdge.opacity(0.5), lineWidth: 0.5)
+        )
+    }
+
+    /// "18 – 19 Temmuz"
+    private var spreadRangeText: String {
+        let left = SpreadIndex.leftDay(of: spread)
+        let right = SpreadIndex.rightDay(of: spread)
+        return "\(DayIndex.dayNumber(left)) – \(DayIndex.dayNumber(right)) \(DayIndex.month(right))"
     }
 
     private func arrowButton(systemName: String,
@@ -166,15 +203,12 @@ struct RootView: View {
                              action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(enabled ? Theme.inkSoft : Theme.inkFaint.opacity(0.4))
-                .frame(width: 42, height: 42)
-                .background(
-                    Circle()
-                        .fill(Theme.paper.opacity(enabled ? 0.85 : 0.4))
-                        .shadow(color: .black.opacity(enabled ? 0.08 : 0), radius: 4, y: 2)
-                )
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(enabled ? Theme.inkSoft : Theme.inkFaint.opacity(0.35))
+                .frame(width: 38, height: 38)
+                .contentShape(Circle())
         }
+        .buttonStyle(PressableButtonStyle())
         .disabled(!enabled)
         .accessibilityLabel(label)
     }
