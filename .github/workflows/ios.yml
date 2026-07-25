@@ -25,21 +25,6 @@ jobs:
           xcodebuild -version
           xcodebuild -list -project Gunluk.xcodeproj
 
-      # Geçici tanı adımı: CKSyncEngine'in gerçek imzalarını SDK'dan oku.
-      # API ayrıntılarını tahmin edip her turda tek hata düzeltmek yerine
-      # doğru arayüzü bir kerede görmek için. Eşitleme derlenince kaldırılacak.
-      - name: CloudKit arayüzünü dök
-        continue-on-error: true
-        run: |
-          SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
-          IFACE=$(find "$SDK/System/Library/Frameworks/CloudKit.framework/Modules" \
-            -name "*.swiftinterface" | head -1)
-          echo "arayüz dosyası: $IFACE"
-          echo "----- CKDatabase.RecordZoneChange (Modification / Deletion) -----"
-          sed -n '262,325p' "$IFACE"
-          echo "----- CKSyncEngine.Configuration ve Event -----"
-          sed -n '1205,1345p' "$IFACE"
-
       - name: Derle (iOS Simulator)
         run: |
           set -o pipefail
