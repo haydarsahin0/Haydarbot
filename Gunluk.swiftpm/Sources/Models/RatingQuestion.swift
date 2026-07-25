@@ -19,6 +19,14 @@ struct RatingQuestion: Identifiable, Hashable {
     let lowLabel: String
     let highLabel: String
 
+    /// Katalogdan çevrilmiş hâlleri. Ham değerler `all` içinde anahtar
+    /// olarak duruyor; kimlikler (`id`) hiç çevrilmiyor çünkü kayıtlarda
+    /// saklanıyorlar.
+    var localizedTitle: String { String(localized: String.LocalizationValue(title)) }
+    var localizedShortTitle: String { String(localized: String.LocalizationValue(shortTitle)) }
+    var localizedLowLabel: String { String(localized: String.LocalizationValue(lowLabel)) }
+    var localizedHighLabel: String { String(localized: String.LocalizationValue(highLabel)) }
+
     var gradient: LinearGradient {
         LinearGradient(colors: [startColor, endColor],
                        startPoint: .leading,

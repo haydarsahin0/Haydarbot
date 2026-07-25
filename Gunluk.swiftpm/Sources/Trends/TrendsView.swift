@@ -67,7 +67,7 @@ struct TrendsView: View {
                         HStack(spacing: 6) {
                             Image(systemName: question.symbol)
                                 .font(.system(size: 12, weight: .semibold))
-                            Text(question.shortTitle)
+                            Text(question.localizedShortTitle)
                                 .font(.system(size: 14, weight: .medium, design: .rounded))
                         }
                         .foregroundStyle(isSelected ? .white : Theme.inkSoft)

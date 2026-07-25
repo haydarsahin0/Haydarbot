@@ -100,7 +100,7 @@ struct EntryEditorView: View {
 
     private var dateHeader: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(DayIndex.monthAndYear(day).uppercased(with: DayIndex.locale))
+            Text(DayIndex.monthAndYear(day).uppercased(with: Locale.current))
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .tracking(1.6)
                 .foregroundStyle(Theme.inkFaint)

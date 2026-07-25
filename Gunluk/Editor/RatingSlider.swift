@@ -51,7 +51,7 @@ struct RatingSlider: View {
                     .foregroundStyle(.white)
             }
 
-            Text(question.title)
+            Text(question.localizedTitle)
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)
@@ -158,9 +158,9 @@ struct RatingSlider: View {
 
     private var endLabels: some View {
         HStack {
-            Text(question.lowLabel)
+            Text(question.localizedLowLabel)
             Spacer()
-            Text(question.highLabel)
+            Text(question.localizedHighLabel)
         }
         .font(.system(size: 11, weight: .medium, design: .rounded))
         .foregroundStyle(Theme.inkFaint)

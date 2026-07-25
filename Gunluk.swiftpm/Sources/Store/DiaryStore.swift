@@ -311,16 +311,14 @@ final class DiaryStore: ObservableObject {
         var totals: [Int: (sum: Int, count: Int)] = [:]
 
         for point in trendPoints(for: question, in: range) {
-            let weekday = DayIndex.calendar.component(.weekday, from: point.date)
+            let weekday = DayIndex.displayCalendar.component(.weekday, from: point.date)
             let current = totals[weekday] ?? (0, 0)
             totals[weekday] = (current.sum + point.value, current.count + 1)
         }
 
-        // Pazartesiden pazara sırala (Gregoryen takvimde 1 = Pazar).
-        let order = [2, 3, 4, 5, 6, 7, 1]
-        let labels = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
-
-        return zip(order, labels).map { weekday, label in
+        // Sıra ve adlar cihazın bölgesinden: bazı ülkelerde hafta pazar
+        // başlıyor, adlar da elbette dile göre değişiyor.
+        return DayIndex.orderedWeekdaySymbols.map { weekday, label in
             let entry = totals[weekday]
             let average = (entry?.count ?? 0) > 0
                 ? Double(entry!.sum) / Double(entry!.count)
@@ -344,7 +342,7 @@ final class DiaryStore: ObservableObject {
 
             for question in RatingQuestion.all {
                 if let value = entry.ratings[question.id] {
-                    lines.append("· \(question.shortTitle): \(value)/100")
+                    lines.append("· \(question.localizedShortTitle): \(value)/100")
                 }
             }
             if entry.hasText {

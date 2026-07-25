@@ -243,10 +243,9 @@ struct SettingsView: View {
         case .waiting: return "bekliyor"
         case .syncing: return "eşitleniyor…"
         case .synced(let date):
-            let formatter = DateFormatter()
-            formatter.locale = DayIndex.locale
-            formatter.dateFormat = "HH:mm"
-            return "son: " + formatter.string(from: date)
+            // Saat biçimi cihazın diline göre (12/24 saat dahil).
+            let time = date.formatted(date: .omitted, time: .shortened)
+            return String(format: String(localized: "son: %@"), time)
         case .failed(let message): return message
         }
     }
