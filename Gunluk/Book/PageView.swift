@@ -13,6 +13,9 @@ struct PageView: View {
     let side: PageSide
     /// Sayfada fotoğraf küçüğü göstermek için; yoksa sayfa yalnızca yazı gösterir.
     var photos: PhotoStore? = nil
+    /// Abonelik olmadan okunamayan geçmiş gün. Tarih görünmeye devam ediyor,
+    /// yalnızca içerik gizleniyor.
+    var isLocked: Bool = false
 
     private var isToday: Bool { DayIndex.isToday(day) }
     private var isFuture: Bool { DayIndex.isFuture(day) }
@@ -139,7 +142,9 @@ struct PageView: View {
         let lineSpacing = max(9, size.height * 0.052)
         let lineCount = 9
 
-        if let entry, entry.hasText {
+        if isLocked {
+            lockedContent(size: size, lineSpacing: lineSpacing, lineCount: lineCount)
+        } else if let entry, entry.hasText {
             Text(entry.text)
                 .font(.system(size: max(7.5, size.width * 0.058), design: .serif))
                 .foregroundStyle(Theme.inkSoft)
@@ -160,11 +165,30 @@ struct PageView: View {
         }
     }
 
+    /// Kilitli sayfa: çizgiler duruyor ama üzerlerinde yazı yerine soluk
+    /// bloklar var — bir şey yazıldığı belli, ne yazıldığı değil.
+    private func lockedContent(size: CGSize, lineSpacing: CGFloat, lineCount: Int) -> some View {
+        VStack(alignment: .leading, spacing: lineSpacing) {
+            ForEach(0..<lineCount, id: \.self) { index in
+                Capsule()
+                    .fill(Theme.rule)
+                    .frame(width: index % 3 == 2 ? size.width * 0.45 : size.width * 0.78,
+                           height: max(2, size.height * 0.012))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .center) {
+            Image(systemName: "lock.fill")
+                .font(.system(size: max(9, size.width * 0.09)))
+                .foregroundStyle(Theme.inkFaint)
+        }
+    }
+
     @ViewBuilder
     private func footer(width: CGFloat) -> some View {
         let ratings = entry?.ratings ?? [:]
 
-        if !ratings.isEmpty || entry?.hasVoice == true {
+        if !isLocked, !ratings.isEmpty || entry?.hasVoice == true {
             HStack(spacing: max(3, width * 0.028)) {
                 if entry?.hasVoice == true {
                     Image(systemName: "waveform")

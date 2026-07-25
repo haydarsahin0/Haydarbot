@@ -9,6 +9,8 @@ struct GunlukApp: App {
     @StateObject private var voices: VoiceStore
     @StateObject private var recorder = AudioRecorder()
     @StateObject private var player = AudioPlayer()
+    @StateObject private var subscriptions = SubscriptionStore()
+    @AppStorage("theme.preference") private var themePreference = ThemePreference.system.rawValue
     @StateObject private var lock = AppLock()
     @StateObject private var reminders = Reminders()
     @StateObject private var cloud: CloudSync
@@ -48,6 +50,7 @@ struct GunlukApp: App {
                     .environmentObject(lock)
                     .environmentObject(reminders)
                     .environmentObject(cloud)
+                    .environmentObject(subscriptions)
                     // Kilitliyken defterin içeriği ekran değiştiricide de
                     // görünmesin diye gizleniyor.
                     .opacity(lock.isLocked ? 0 : 1)
@@ -59,6 +62,9 @@ struct GunlukApp: App {
             }
             .animation(.easeInOut(duration: 0.2), value: lock.isLocked)
             .tint(Theme.accent)
+            .preferredColorScheme(
+                ThemePreference(rawValue: themePreference)?.colorScheme
+            )
             .task {
                 // Kayıtlardan silinmiş ama diskte kalmış fotoğrafları temizle.
                 photos.removeOrphans(keeping: store.allPhotoIDs)
@@ -69,6 +75,7 @@ struct GunlukApp: App {
                     await reminders.apply()
                 }
                 await cloud.syncNow()
+                await subscriptions.refresh()
             }
         }
         .onChange(of: scenePhase) { _, phase in

@@ -22,6 +22,8 @@ struct BookView: View {
     @Binding var command: BookCommand?
     let store: DiaryStore
     let photos: PhotoStore
+    /// Geçmiş günlerin okunabilmesi için abonelik gerekiyor mu.
+    let isSubscribed: Bool
     /// Bir sayfaya dokunulduğunda: gün numarası ve dokunulan taraf.
     let onSelectDay: @MainActor (Int, PageSide) -> Void
 
@@ -148,7 +150,15 @@ struct BookView: View {
     }
 
     private func page(day: Int, side: PageSide) -> some View {
-        PageView(day: day, entry: store.entry(for: day), side: side, photos: photos)
+        let entry = store.entry(for: day)
+        let locked = Paywall.isLocked(day: day,
+                                      isSubscribed: isSubscribed,
+                                      hasContent: entry?.isEmpty == false)
+        return PageView(day: day,
+                        entry: entry,
+                        side: side,
+                        photos: photos,
+                        isLocked: locked)
     }
 
     // MARK: - Dönen yaprak

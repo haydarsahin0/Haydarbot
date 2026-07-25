@@ -13,6 +13,7 @@ struct RootView: View {
     @EnvironmentObject private var lock: AppLock
     @EnvironmentObject private var reminders: Reminders
     @EnvironmentObject private var cloud: CloudSync
+    @EnvironmentObject private var subscriptions: SubscriptionStore
 
     @State private var spread: Int = SpreadIndex.spread(for: DayIndex.today)
     @State private var command: BookCommand?
@@ -21,6 +22,7 @@ struct RootView: View {
     @State private var showsDatePicker = false
     @State private var showsSettings = false
     @State private var showsTrends = false
+    @State private var paywallDay: PaywallRequest?
     @State private var jumpDate = Date()
 
     var body: some View {
@@ -37,6 +39,7 @@ struct RootView: View {
                     command: $command,
                     store: store,
                     photos: photos,
+                    isSubscribed: subscriptions.isSubscribed,
                     onSelectDay: openDay(_:side:)
                 )
                 .padding(.horizontal, 10)
@@ -59,12 +62,16 @@ struct RootView: View {
                     .zIndex(10)
             }
         }
+        .sheet(item: $paywallDay) { request in
+            PaywallView(subscriptions: subscriptions, requestedDay: request.day)
+        }
         .sheet(isPresented: $showsDatePicker) { datePickerSheet }
         .sheet(isPresented: $showsTrends) {
             TrendsView(store: store)
         }
         .sheet(isPresented: $showsSettings) {
-            SettingsView(store: store,
+            SettingsView(subscriptions: subscriptions,
+                         store: store,
                          photos: photos,
                          voices: voices,
                          lock: lock,
@@ -252,6 +259,15 @@ struct RootView: View {
     // MARK: - Eylemler
 
     private func openDay(_ day: Int, side: PageSide) {
+        // Kilitli geçmiş gün: editör yerine abonelik ekranı açılıyor.
+        let hasContent = store.entry(for: day)?.isEmpty == false
+        if Paywall.isLocked(day: day,
+                            isSubscribed: subscriptions.isSubscribed,
+                            hasContent: hasContent) {
+            paywallDay = PaywallRequest(day: day)
+            return
+        }
+
         openAnchor = side == .left ? UnitPoint(x: 0.25, y: 0.45) : UnitPoint(x: 0.75, y: 0.45)
         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
             selectedDay = day
@@ -276,4 +292,10 @@ struct RootView: View {
             spread = target
         }
     }
+}
+
+/// `sheet(item:)` bir `Identifiable` istiyor; gün numarasını sarmalıyor.
+struct PaywallRequest: Identifiable {
+    let day: Int
+    var id: Int { day }
 }

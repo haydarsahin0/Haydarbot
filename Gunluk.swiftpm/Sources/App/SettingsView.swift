@@ -5,6 +5,7 @@ import SwiftUI
 @MainActor
 struct SettingsView: View {
 
+    @ObservedObject var subscriptions: SubscriptionStore
     @ObservedObject var store: DiaryStore
     @ObservedObject var photos: PhotoStore
     @ObservedObject var voices: VoiceStore
@@ -15,11 +16,15 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var hapticsEnabled = Haptics.isEnabled
     @State private var exportPayload: ExportPayload?
+    @State private var showsPaywall = false
+    @AppStorage("theme.preference") private var themePreference = ThemePreference.system.rawValue
 
     var body: some View {
         NavigationStack {
             List {
                 statisticsSection
+                subscriptionSection
+                appearanceSection
                 cloudSection
                 securitySection
                 reminderSection
@@ -37,6 +42,9 @@ struct SettingsView: View {
         }
         .sheet(item: $exportPayload) { payload in
             ShareSheet(items: [payload.text])
+        }
+        .sheet(isPresented: $showsPaywall) {
+            PaywallView(subscriptions: subscriptions)
         }
     }
 
@@ -56,6 +64,60 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
             .listRowBackground(Color.clear)
+        }
+    }
+
+    private var subscriptionSection: some View {
+        Section {
+            if subscriptions.isSubscribed {
+                HStack {
+                    Label("Abonelik etkin", systemImage: "checkmark.seal.fill")
+                        .foregroundStyle(Theme.accent)
+                    Spacer()
+                }
+            } else {
+                Button {
+                    showsPaywall = true
+                } label: {
+                    HStack {
+                        Label("Geçmişini aç", systemImage: "lock.open")
+                        Spacer()
+                        if let price = subscriptions.priceText {
+                            Text(String(format: String(localized: "%@ / ay"), price))
+                                .foregroundStyle(Theme.inkSoft)
+                                .font(.system(size: 14, design: .rounded))
+                        }
+                    }
+                }
+            }
+
+            if SubscriptionStore.isTestable {
+                Button {
+                    subscriptions.toggleForTesting()
+                } label: {
+                    Label(subscriptions.isSubscribed
+                          ? "Aboneliği kapat (test)"
+                          : "Aboneliği aç (test)",
+                          systemImage: "wrench.adjustable")
+                }
+            }
+        } header: {
+            Text("Abonelik")
+        } footer: {
+            Text("Yazmak, fotoğraf ve ses eklemek her zaman ücretsiz. Abonelik geçmiş günlerini okumanı açıyor.")
+        }
+    }
+
+    private var appearanceSection: some View {
+        Section("Görünüm") {
+            Picker(selection: $themePreference) {
+                ForEach(ThemePreference.allCases) { option in
+                    Label(option.title, systemImage: option.symbol).tag(option.rawValue)
+                }
+            } label: {
+                Label("Tema", systemImage: "circle.lefthalf.filled")
+            }
+            .pickerStyle(.menu)
         }
     }
 
