@@ -164,8 +164,14 @@ struct PageView: View {
     private func footer(width: CGFloat) -> some View {
         let ratings = entry?.ratings ?? [:]
 
-        if !ratings.isEmpty {
+        if !ratings.isEmpty || entry?.hasVoice == true {
             HStack(spacing: max(3, width * 0.028)) {
+                if entry?.hasVoice == true {
+                    Image(systemName: "waveform")
+                        .font(.system(size: max(6, width * 0.05), weight: .semibold))
+                        .foregroundStyle(Theme.accent.opacity(0.75))
+                }
+
                 ForEach(RatingQuestion.all) { question in
                     if let value = ratings[question.id] {
                         RatingDot(question: question, value: value, size: max(5, width * 0.045))

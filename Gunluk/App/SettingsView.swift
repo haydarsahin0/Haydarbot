@@ -7,6 +7,7 @@ struct SettingsView: View {
 
     @ObservedObject var store: DiaryStore
     @ObservedObject var photos: PhotoStore
+    @ObservedObject var voices: VoiceStore
     @ObservedObject var lock: AppLock
     @ObservedObject var reminders: Reminders
     @ObservedObject var cloud: CloudSync
@@ -49,6 +50,8 @@ struct SettingsView: View {
                 statistic(value: "\(store.streak)", label: "günlük seri")
                 Divider()
                 statistic(value: "\(store.allPhotoIDs.count)", label: "fotoğraf")
+                Divider()
+                statistic(value: "\(store.allVoiceIDs.count)", label: "ses kaydı")
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
@@ -151,6 +154,13 @@ struct SettingsView: View {
             } label: {
                 Label("Fotoğraflar", systemImage: "photo.stack")
             }
+
+            LabeledContent {
+                Text(voiceSizeText)
+                    .foregroundStyle(Theme.inkSoft)
+            } label: {
+                Label("Ses kayıtları", systemImage: "waveform")
+            }
         }
     }
 
@@ -184,8 +194,10 @@ struct SettingsView: View {
         return false
     }
 
-    private var photoSizeText: String {
-        let bytes = photos.totalBytes
+    private var photoSizeText: String { sizeText(photos.totalBytes) }
+    private var voiceSizeText: String { sizeText(voices.totalBytes) }
+
+    private func sizeText(_ bytes: Int64) -> String {
         guard bytes > 0 else { return "yok" }
         return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
     }

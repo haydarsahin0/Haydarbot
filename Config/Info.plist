@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Günlüğüne o günün fotoğrafını doğrudan çekerek eklemek için kamera kullanılıyor. Çektiğin fotoğraflar yalnızca senin günlüğünde saklanıyor.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Günlüğüne yazmak yerine konuşarak sesli kayıt bırakabilmen için mikrofon kullanılıyor. Kayıtların yalnızca senin günlüğünde saklanıyor.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Günlüğünü yalnızca senin açabilmen için Face ID kullanılıyor.</string>
 	<key>UIBackgroundModes</key>

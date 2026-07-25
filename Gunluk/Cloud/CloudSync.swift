@@ -53,6 +53,7 @@ final class CloudSync: NSObject, ObservableObject {
     private enum RecordType {
         static let entry = "Entry"
         static let photo = "Photo"
+        static let voice = "Voice"
     }
 
     private static let zoneName = "Gunluk"
@@ -64,11 +65,13 @@ final class CloudSync: NSObject, ObservableObject {
     private lazy var container = CKContainer(identifier: "iCloud.com.haydarsahin.gunluk")
     private unowned let store: DiaryStore
     private unowned let photos: PhotoStore
+    private unowned let voices: VoiceStore
     private var engine: CKSyncEngine?
 
-    init(store: DiaryStore, photos: PhotoStore) {
+    init(store: DiaryStore, photos: PhotoStore, voices: VoiceStore) {
         self.store = store
         self.photos = photos
+        self.voices = voices
         let enabled = UserDefaults.standard.object(forKey: Keys.enabled) as? Bool ?? true
         self.isEnabled = enabled
         super.init()
@@ -146,6 +149,11 @@ final class CloudSync: NSObject, ObservableObject {
         engine.state.add(pendingRecordZoneChanges: [.deleteRecord(recordID)])
     }
 
+    // Ses kayıtları da fotoğraflar gibi kendi kayıtlarında; ikisi de
+    // kimliklerinden ayırt ediliyor, ayrı bir işaretlemeye gerek yok.
+    func markVoiceChanged(id: String) { markPhotoChanged(id: id) }
+    func markVoiceDeleted(id: String) { markPhotoDeleted(id: id) }
+
     /// Uygulama öne geldiğinde elle bir tur eşitleme.
     func syncNow() async {
         guard isEnabled else { return }
@@ -168,8 +176,8 @@ final class CloudSync: NSObject, ObservableObject {
         for day in store.entries.keys {
             changes.append(.saveRecord(CKRecord.ID(recordName: DayIndex.key(for: day), zoneID: zoneID)))
         }
-        for photoID in store.allPhotoIDs {
-            changes.append(.saveRecord(CKRecord.ID(recordName: photoID, zoneID: zoneID)))
+        for assetID in store.allPhotoIDs.union(store.allVoiceIDs) {
+            changes.append(.saveRecord(CKRecord.ID(recordName: assetID, zoneID: zoneID)))
         }
         guard !changes.isEmpty else { return }
         engine.state.add(pendingRecordZoneChanges: changes)
@@ -212,8 +220,7 @@ final class CloudSync: NSObject, ObservableObject {
         )
     }
 
-    private func populate(photoRecord record: CKRecord, id: String) -> Bool {
-        let url = photos.url(for: id)
+    private func populate(assetRecord record: CKRecord, url: URL) -> Bool {
         guard FileManager.default.fileExists(atPath: url.path) else { return false }
         record["asset"] = CKAsset(fileURL: url)
         return true
@@ -309,9 +316,18 @@ extension CloudSync: CKSyncEngineDelegate {
         let name = recordID.recordName
 
         if isPhotoRecordName(name) {
-            let record = CKRecord(recordType: RecordType.photo, recordID: recordID)
-            guard populate(photoRecord: record, id: name) else { return nil }
-            return record
+            // Kimlik hangi depoda dosyası varsa o türde gönderiliyor.
+            if photos.exists(name) {
+                let record = CKRecord(recordType: RecordType.photo, recordID: recordID)
+                guard populate(assetRecord: record, url: photos.url(for: name)) else { return nil }
+                return record
+            }
+            if voices.exists(name) {
+                let record = CKRecord(recordType: RecordType.voice, recordID: recordID)
+                guard populate(assetRecord: record, url: voices.url(for: name)) else { return nil }
+                return record
+            }
+            return nil
         }
 
         guard let day = DayIndex.index(forKey: name),
@@ -328,7 +344,11 @@ extension CloudSync: CKSyncEngineDelegate {
         for modification in changes.modifications {
             let record = modification.record
             if record.recordType == RecordType.photo {
-                applyPhoto(record)
+                applyAsset(record, destination: photos.url(for: record.recordID.recordName),
+                           alreadyPresent: photos.exists(record.recordID.recordName))
+            } else if record.recordType == RecordType.voice {
+                applyAsset(record, destination: voices.url(for: record.recordID.recordName),
+                           alreadyPresent: voices.exists(record.recordID.recordName))
             } else if let incoming = entry(from: record) {
                 store.mergeFromCloud(incoming)
             }
@@ -338,21 +358,21 @@ extension CloudSync: CKSyncEngineDelegate {
             let name = deletion.recordID.recordName
             if isPhotoRecordName(name) {
                 photos.delete(name)
+                voices.delete(name)
             } else if let day = DayIndex.index(forKey: name) {
                 store.deleteFromCloud(day: day)
             }
         }
     }
 
-    private func applyPhoto(_ record: CKRecord) {
-        let id = record.recordID.recordName
-        // Zaten diskteyse tekrar yazma; aynı kimlikli fotoğrafın içeriği
-        // değişmiyor.
-        guard !photos.exists(id) else { return }
+    /// Buluttan gelen fotoğraf ya da ses dosyasını diske yazar. Zaten
+    /// varsa dokunmuyor; aynı kimlikli dosyanın içeriği hiç değişmiyor.
+    private func applyAsset(_ record: CKRecord, destination: URL, alreadyPresent: Bool) {
+        guard !alreadyPresent else { return }
         guard let asset = record["asset"] as? CKAsset,
               let sourceURL = asset.fileURL,
               let data = try? Data(contentsOf: sourceURL) else { return }
-        try? data.write(to: photos.url(for: id), options: .atomic)
+        try? data.write(to: destination, options: .atomic)
     }
 
     private func handleSent(_ sent: CKSyncEngine.Event.SentRecordZoneChanges) {

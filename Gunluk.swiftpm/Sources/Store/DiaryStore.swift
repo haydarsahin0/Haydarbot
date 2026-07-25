@@ -38,6 +38,8 @@ final class DiaryStore: ObservableObject {
     var onDayRemoved: ((Int) -> Void)?
     var onPhotoAdded: ((String) -> Void)?
     var onPhotoRemoved: ((String) -> Void)?
+    var onVoiceAdded: ((String) -> Void)?
+    var onVoiceRemoved: ((String) -> Void)?
 
     /// Buluttan gelen bir değişikliği uygularken geri çağrıları susturur;
     /// yoksa aynı kayıt sonsuza kadar ileri geri gider.
@@ -126,10 +128,32 @@ final class DiaryStore: ObservableObject {
         if !isApplyingRemoteChange { onPhotoRemoved?(id) }
     }
 
+    func addVoiceNote(_ note: VoiceNote, for day: Int) {
+        mutate(day: day) { entry in
+            guard !entry.voiceNotes.contains(where: { $0.id == note.id }) else { return false }
+            entry.voiceNotes.append(note)
+            return true
+        }
+        if !isApplyingRemoteChange { onVoiceAdded?(note.id) }
+    }
+
+    func removeVoiceNote(id: String, for day: Int) {
+        mutate(day: day) { entry in
+            guard let index = entry.voiceNotes.firstIndex(where: { $0.id == id }) else { return false }
+            entry.voiceNotes.remove(at: index)
+            return true
+        }
+        if !isApplyingRemoteChange { onVoiceRemoved?(id) }
+    }
+
     /// Kayıtlarda geçen tüm fotoğraf kimlikleri — artık kullanılmayan
     /// dosyaları temizlemek için.
     var allPhotoIDs: Set<String> {
         Set(entries.values.flatMap { $0.photoIDs })
+    }
+
+    var allVoiceIDs: Set<String> {
+        Set(entries.values.flatMap { $0.voiceNotes.map(\.id) })
     }
 
     func removeRating(question: RatingQuestion, for day: Int) {
@@ -325,6 +349,12 @@ final class DiaryStore: ObservableObject {
             }
             if entry.hasText {
                 lines.append(entry.text)
+            }
+            for note in entry.voiceNotes {
+                lines.append("· Sesli kayıt (\(note.durationText))")
+            }
+            if entry.hasPhotos {
+                lines.append("· \(entry.photoIDs.count) fotoğraf")
             }
             lines.append("")
         }

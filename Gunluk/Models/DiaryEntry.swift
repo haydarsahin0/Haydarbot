@@ -11,6 +11,8 @@ struct DiaryEntry: Codable, Identifiable, Equatable, Sendable {
     /// O güne eklenen fotoğrafların kimlikleri, eklenme sırasına göre.
     /// Görsellerin kendisi `PhotoStore` tarafından ayrı dosyalarda tutuluyor.
     var photoIDs: [String]
+    /// O güne alınan sesli kayıtlar. Ses dosyaları `VoiceStore`'da.
+    var voiceNotes: [VoiceNote]
     var createdAt: Date
     var updatedAt: Date
 
@@ -20,12 +22,14 @@ struct DiaryEntry: Codable, Identifiable, Equatable, Sendable {
          text: String = "",
          ratings: [String: Int] = [:],
          photoIDs: [String] = [],
+         voiceNotes: [VoiceNote] = [],
          createdAt: Date = Date(),
          updatedAt: Date = Date()) {
         self.dateKey = dateKey
         self.text = text
         self.ratings = ratings
         self.photoIDs = photoIDs
+        self.voiceNotes = voiceNotes
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -34,7 +38,7 @@ struct DiaryEntry: Codable, Identifiable, Equatable, Sendable {
     // anahtarda hata verdiği için elle yazılıyor; böylece güncelleme sonrası
     // kullanıcının mevcut günlüğü okunmaya devam ediyor.
     private enum CodingKeys: String, CodingKey {
-        case dateKey, text, ratings, photoIDs, createdAt, updatedAt
+        case dateKey, text, ratings, photoIDs, voiceNotes, createdAt, updatedAt
     }
 
     init(from decoder: Decoder) throws {
@@ -43,6 +47,7 @@ struct DiaryEntry: Codable, Identifiable, Equatable, Sendable {
         text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
         ratings = try container.decodeIfPresent([String: Int].self, forKey: .ratings) ?? [:]
         photoIDs = try container.decodeIfPresent([String].self, forKey: .photoIDs) ?? []
+        voiceNotes = try container.decodeIfPresent([VoiceNote].self, forKey: .voiceNotes) ?? []
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? Date()
     }
@@ -51,6 +56,7 @@ struct DiaryEntry: Codable, Identifiable, Equatable, Sendable {
         text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && ratings.isEmpty
             && photoIDs.isEmpty
+            && voiceNotes.isEmpty
     }
 
     var hasText: Bool {
@@ -58,6 +64,7 @@ struct DiaryEntry: Codable, Identifiable, Equatable, Sendable {
     }
 
     var hasPhotos: Bool { !photoIDs.isEmpty }
+    var hasVoice: Bool { !voiceNotes.isEmpty }
 }
 
 /// Diskteki dosyanın kök yapısı. `version` ileride biçim değişirse göç için.
@@ -65,7 +72,7 @@ struct DiaryArchive: Codable, Sendable {
     var version: Int
     var entries: [DiaryEntry]
 
-    init(version: Int = 2, entries: [DiaryEntry] = []) {
+    init(version: Int = 3, entries: [DiaryEntry] = []) {
         self.version = version
         self.entries = entries
     }

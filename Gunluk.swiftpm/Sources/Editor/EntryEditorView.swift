@@ -9,6 +9,9 @@ struct EntryEditorView: View {
     let day: Int
     @ObservedObject var store: DiaryStore
     @ObservedObject var photos: PhotoStore
+    @ObservedObject var voices: VoiceStore
+    @ObservedObject var recorder: AudioRecorder
+    @ObservedObject var player: AudioPlayer
     let onClose: @MainActor () -> Void
 
     @State private var text: String = ""
@@ -28,6 +31,12 @@ struct EntryEditorView: View {
                     VStack(alignment: .leading, spacing: 22) {
                         dateHeader
                         writingArea
+                        VoiceSection(day: day,
+                                     store: store,
+                                     voices: voices,
+                                     recorder: recorder,
+                                     player: player,
+                                     isEnabled: isEditable)
                         PhotoSection(day: day,
                                      store: store,
                                      photos: photos,

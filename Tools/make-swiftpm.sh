@@ -67,7 +67,8 @@ let package = Package(
             ],
             capabilities: [
                 .camera(purposeString: "Günlüğüne o günün fotoğrafını doğrudan çekerek eklemek için kamera kullanılıyor."),
-                .photoLibrary(purposeString: "Günlüğüne galerinden fotoğraf ekleyebilmek için kullanılıyor.")
+                .photoLibrary(purposeString: "Günlüğüne galerinden fotoğraf ekleyebilmek için kullanılıyor."),
+                .microphone(purposeString: "Günlüğüne yazmak yerine konuşarak sesli kayıt bırakabilmen için mikrofon kullanılıyor.")
             ],
             appCategory: .lifestyle
         )

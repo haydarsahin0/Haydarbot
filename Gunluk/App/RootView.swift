@@ -7,6 +7,9 @@ struct RootView: View {
 
     @EnvironmentObject private var store: DiaryStore
     @EnvironmentObject private var photos: PhotoStore
+    @EnvironmentObject private var voices: VoiceStore
+    @EnvironmentObject private var recorder: AudioRecorder
+    @EnvironmentObject private var player: AudioPlayer
     @EnvironmentObject private var lock: AppLock
     @EnvironmentObject private var reminders: Reminders
     @EnvironmentObject private var cloud: CloudSync
@@ -46,6 +49,9 @@ struct RootView: View {
                 EntryEditorView(day: selectedDay,
                                 store: store,
                                 photos: photos,
+                                voices: voices,
+                                recorder: recorder,
+                                player: player,
                                 onClose: closeEditor)
                     .transition(
                         .scale(scale: 0.92, anchor: openAnchor).combined(with: .opacity)
@@ -60,6 +66,7 @@ struct RootView: View {
         .sheet(isPresented: $showsSettings) {
             SettingsView(store: store,
                          photos: photos,
+                         voices: voices,
                          lock: lock,
                          reminders: reminders,
                          cloud: cloud)

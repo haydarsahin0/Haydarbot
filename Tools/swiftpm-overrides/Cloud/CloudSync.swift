@@ -29,12 +29,14 @@ final class CloudSync: ObservableObject {
     @Published private(set) var status: Status = .failed("Swift Playgrounds sürümünde kapalı")
     @Published var isEnabled: Bool = false
 
-    init(store: DiaryStore, photos: PhotoStore) {}
+    init(store: DiaryStore, photos: PhotoStore, voices: VoiceStore) {}
 
     func markChanged(day: Int) {}
     func markDeleted(day: Int) {}
     func markPhotoChanged(id: String) {}
     func markPhotoDeleted(id: String) {}
+    func markVoiceChanged(id: String) {}
+    func markVoiceDeleted(id: String) {}
     func uploadEverything() {}
     func syncNow() async {}
 }
