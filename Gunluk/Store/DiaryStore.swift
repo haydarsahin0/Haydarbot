@@ -30,6 +30,19 @@ final class DiaryStore: ObservableObject {
 
     private static let debounceInterval: TimeInterval = 0.6
 
+    // MARK: - Bulut bağlantısı
+    //
+    // Depo CloudKit'i tanımıyor; yalnızca "şu gün değişti" diye haber veriyor.
+    // Böylece iCloud tamamen devre dışıyken de bu sınıf olduğu gibi çalışıyor.
+    var onDayChanged: ((Int) -> Void)?
+    var onDayRemoved: ((Int) -> Void)?
+    var onPhotoAdded: ((String) -> Void)?
+    var onPhotoRemoved: ((String) -> Void)?
+
+    /// Buluttan gelen bir değişikliği uygularken geri çağrıları susturur;
+    /// yoksa aynı kayıt sonsuza kadar ileri geri gider.
+    private var isApplyingRemoteChange = false
+
     init(fileURL: URL? = nil) {
         if let fileURL {
             self.fileURL = fileURL
@@ -101,6 +114,7 @@ final class DiaryStore: ObservableObject {
             entry.photoIDs.append(id)
             return true
         }
+        if !isApplyingRemoteChange { onPhotoAdded?(id) }
     }
 
     func removePhoto(id: String, for day: Int) {
@@ -109,6 +123,7 @@ final class DiaryStore: ObservableObject {
             entry.photoIDs.remove(at: index)
             return true
         }
+        if !isApplyingRemoteChange { onPhotoRemoved?(id) }
     }
 
     /// Kayıtlarda geçen tüm fotoğraf kimlikleri — artık kullanılmayan
@@ -134,8 +149,10 @@ final class DiaryStore: ObservableObject {
 
         if entry.isEmpty {
             entries.removeValue(forKey: day)
+            if !isApplyingRemoteChange { onDayRemoved?(day) }
         } else {
             entries[day] = entry
+            if !isApplyingRemoteChange { onDayChanged?(day) }
         }
         scheduleSave()
     }
@@ -215,6 +232,40 @@ final class DiaryStore: ObservableObject {
         }
         savedStateReset = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
+    }
+
+    // MARK: - Buluttan gelen değişiklikler
+
+    /// iCloud'dan gelen kaydı yerelle birleştirir.
+    ///
+    /// Çakışmada `updatedAt` değeri yeni olan kazanıyor. Günlük için makul bir
+    /// kural: aynı günü iki cihazdan aynı anda yazmak nadir, metin birleştirmek
+    /// ise kullanıcıya karmaşa olarak dönüyor.
+    func mergeFromCloud(_ incoming: DiaryEntry) {
+        guard let day = DayIndex.index(forKey: incoming.dateKey) else { return }
+
+        if let local = entries[day], local.updatedAt >= incoming.updatedAt {
+            return
+        }
+
+        isApplyingRemoteChange = true
+        defer { isApplyingRemoteChange = false }
+
+        if incoming.isEmpty {
+            entries.removeValue(forKey: day)
+        } else {
+            entries[day] = incoming
+        }
+        scheduleSave()
+    }
+
+    /// iCloud'da silinmiş bir günü yerelden de kaldırır.
+    func deleteFromCloud(day: Int) {
+        guard entries[day] != nil else { return }
+        isApplyingRemoteChange = true
+        defer { isApplyingRemoteChange = false }
+        entries.removeValue(forKey: day)
+        scheduleSave()
     }
 
     // MARK: - Grafik hesapları

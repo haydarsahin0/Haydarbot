@@ -28,6 +28,10 @@
 	<string>Günlüğüne o günün fotoğrafını doğrudan çekerek eklemek için kamera kullanılıyor. Çektiğin fotoğraflar yalnızca senin günlüğünde saklanıyor.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Günlüğünü yalnızca senin açabilmen için Face ID kullanılıyor.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

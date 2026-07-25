@@ -9,6 +9,7 @@ struct SettingsView: View {
     @ObservedObject var photos: PhotoStore
     @ObservedObject var lock: AppLock
     @ObservedObject var reminders: Reminders
+    @ObservedObject var cloud: CloudSync
 
     @Environment(\.dismiss) private var dismiss
     @State private var hapticsEnabled = Haptics.isEnabled
@@ -18,6 +19,7 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 statisticsSection
+                cloudSection
                 securitySection
                 reminderSection
                 preferencesSection
@@ -51,6 +53,33 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
             .listRowBackground(Color.clear)
+        }
+    }
+
+    private var cloudSection: some View {
+        Section("Yedekleme") {
+            Toggle(isOn: $cloud.isEnabled) {
+                Label("iCloud'a yedekle", systemImage: "icloud")
+            }
+            .tint(Theme.accent)
+
+            HStack {
+                Text("Durum")
+                Spacer()
+                Text(cloudStatusText)
+                    .foregroundStyle(cloudStatusIsError ? Theme.accent : Theme.inkSoft)
+                    .font(.system(size: 14, design: .rounded))
+            }
+
+            if cloud.isEnabled {
+                Text("Günlüğün ve fotoğrafların senin iCloud hesabında saklanıyor. Telefonunu değiştirdiğinde ya da uygulamayı yeniden kurduğunda geri geliyor.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.inkSoft)
+            } else {
+                Text("Yedekleme kapalıyken kayıtların yalnızca bu cihazda. Telefonu kaybedersen ya da uygulamayı silersen geri getirilemez.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.accent)
+            }
         }
     }
 
@@ -127,13 +156,32 @@ struct SettingsView: View {
 
     private var aboutSection: some View {
         Section {
-            Text("Kayıtların bu cihazda ve senin iCloud hesabında tutuluyor. Hiçbir veri bize ya da üçüncü bir tarafa gönderilmiyor.")
+            Text("Kayıtların bu cihazda ve açıksa senin iCloud hesabında tutuluyor. Hiçbir veri bize ya da üçüncü bir tarafa gönderilmiyor.")
                 .font(.footnote)
                 .foregroundStyle(Theme.inkSoft)
         }
     }
 
     // MARK: - Yardımcılar
+
+    private var cloudStatusText: String {
+        switch cloud.status {
+        case .disabled: return "kapalı"
+        case .waiting: return "bekliyor"
+        case .syncing: return "eşitleniyor…"
+        case .synced(let date):
+            let formatter = DateFormatter()
+            formatter.locale = DayIndex.locale
+            formatter.dateFormat = "HH:mm"
+            return "son: " + formatter.string(from: date)
+        case .failed(let message): return message
+        }
+    }
+
+    private var cloudStatusIsError: Bool {
+        if case .failed = cloud.status { return true }
+        return false
+    }
 
     private var photoSizeText: String {
         let bytes = photos.totalBytes

@@ -9,6 +9,7 @@ struct RootView: View {
     @EnvironmentObject private var photos: PhotoStore
     @EnvironmentObject private var lock: AppLock
     @EnvironmentObject private var reminders: Reminders
+    @EnvironmentObject private var cloud: CloudSync
 
     @State private var spread: Int = SpreadIndex.spread(for: DayIndex.today)
     @State private var command: BookCommand?
@@ -60,7 +61,8 @@ struct RootView: View {
             SettingsView(store: store,
                          photos: photos,
                          lock: lock,
-                         reminders: reminders)
+                         reminders: reminders,
+                         cloud: cloud)
         }
     }
 
