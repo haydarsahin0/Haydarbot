@@ -55,8 +55,18 @@ jobs:
       - name: Derle
         run: |
           set -o pipefail
+          # Şema adı ürünün görünen adı değil, paketten türüyor. Sabit yazmak
+          # yerine listeden okunuyor ki adlandırma değişse de kırılmasın.
+          xcodebuild -list
+          SCHEME=$(xcodebuild -list -json | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          container = data.get('workspace') or data.get('project')
+          print(container['schemes'][0])
+          ")
+          echo "şema: $SCHEME"
           xcodebuild build \
-            -scheme "Günlük" \
+            -scheme "$SCHEME" \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath /tmp/swiftpm-build \
             CODE_SIGNING_ALLOWED=NO
