@@ -35,10 +35,10 @@ jobs:
           IFACE=$(find "$SDK/System/Library/Frameworks/CloudKit.framework/Modules" \
             -name "*.swiftinterface" | head -1)
           echo "arayüz dosyası: $IFACE"
-          echo "----- CKSyncEngine bildirimleri -----"
-          grep -nE "^\s*(@|public|extension|open|internal)" "$IFACE" \
-            | grep -iE "syncengine|fetchedrecord|sentrecord|pendingrecord|changebatch|sendchanges|accountchange|zonechange" \
-            | head -200
+          echo "----- CKDatabase.RecordZoneChange (Modification / Deletion) -----"
+          sed -n '262,325p' "$IFACE"
+          echo "----- CKSyncEngine.Configuration ve Event -----"
+          sed -n '1205,1345p' "$IFACE"
 
       - name: Derle (iOS Simulator)
         run: |

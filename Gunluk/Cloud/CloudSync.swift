@@ -82,12 +82,11 @@ final class CloudSync: NSObject, ObservableObject {
         guard engine == nil else { return }
         status = .waiting
 
-        var configuration = CKSyncEngine.Configuration(
+        let configuration = CKSyncEngine.Configuration(
             database: container.privateCloudDatabase,
             stateSerialization: savedState(),
             delegate: self
         )
-        configuration.automaticallySync = true
         let engine = CKSyncEngine(configuration)
         self.engine = engine
 
@@ -234,7 +233,7 @@ extension CloudSync: CKSyncEngineDelegate {
             await handleAccountChange(change)
 
         case .fetchedRecordZoneChanges(let changes):
-            await apply(modifications: changes.modifications, deletions: changes.deletions)
+            await apply(changes)
 
         case .sentRecordZoneChanges(let sent):
             await handleSent(sent)
@@ -309,8 +308,9 @@ extension CloudSync: CKSyncEngineDelegate {
         return record
     }
 
-    private func apply(modifications: [CKRecord], deletions: [CKSyncEngine.Event.FetchedRecordDeletion]) {
-        for record in modifications {
+    private func apply(_ changes: CKSyncEngine.Event.FetchedRecordZoneChanges) {
+        for modification in changes.modifications {
+            let record = modification.record
             if record.recordType == RecordType.photo {
                 applyPhoto(record)
             } else if let incoming = entry(from: record) {
@@ -318,7 +318,7 @@ extension CloudSync: CKSyncEngineDelegate {
             }
         }
 
-        for deletion in deletions {
+        for deletion in changes.deletions {
             let name = deletion.recordID.recordName
             if isPhotoRecordName(name) {
                 photos.delete(name)
