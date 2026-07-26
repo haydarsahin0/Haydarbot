@@ -113,11 +113,7 @@ enum SoundEffects {
 
     private static func player(for effect: Effect) -> AVAudioPlayer? {
         if let existing = players[effect] { return existing }
-        // Xcode hedefi dosyaları paketin köküne düz kopyalıyor, SPM ise
-        // Sounds/ klasörünü koruyabiliyor; iki yere de bakılıyor.
-        let url = bundle.url(forResource: effect.rawValue, withExtension: "wav")
-            ?? bundle.url(forResource: effect.rawValue, withExtension: "wav", subdirectory: "Sounds")
-        guard let url, let player = try? AVAudioPlayer(contentsOf: url) else {
+        guard let url = locate(effect), let player = try? AVAudioPlayer(contentsOf: url) else {
             return nil
         }
         player.volume = effect.volume
@@ -136,11 +132,31 @@ enum SoundEffects {
         didActivateSession = true
     }
 
-    private static var bundle: Bundle {
-        #if SWIFT_PACKAGE
-        return .module
-        #else
-        return .main
-        #endif
+    /// Ses dosyasını paket içinde arar.
+    ///
+    /// Xcode hedefinde dosyalar uygulama paketinin köküne düz kopyalanıyor.
+    /// Swift Playgrounds sürümünde `.process("Sounds")` ile bildiriliyorlar;
+    /// ürün bir uygulama olduğu için `Bundle.module` üretilmiyor, dosyalar yine
+    /// uygulama paketine giriyor — ama SwiftPM sürümüne göre kökte de olabilir,
+    /// gömülü bir `.bundle` içinde de. Tahmin yürütmek yerine hepsine bakılıyor.
+    private static func locate(_ effect: Effect) -> URL? {
+        for bundle in candidateBundles {
+            if let url = bundle.url(forResource: effect.rawValue, withExtension: "wav") {
+                return url
+            }
+            if let url = bundle.url(forResource: effect.rawValue,
+                                    withExtension: "wav",
+                                    subdirectory: "Sounds") {
+                return url
+            }
+        }
+        return nil
     }
+
+    private static let candidateBundles: [Bundle] = {
+        var bundles = [Bundle.main]
+        let nested = Bundle.main.urls(forResourcesWithExtension: "bundle", subdirectory: nil) ?? []
+        bundles.append(contentsOf: nested.compactMap(Bundle.init(url:)))
+        return bundles
+    }()
 }
