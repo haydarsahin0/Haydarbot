@@ -113,8 +113,11 @@ enum SoundEffects {
 
     private static func player(for effect: Effect) -> AVAudioPlayer? {
         if let existing = players[effect] { return existing }
-        guard let url = bundle.url(forResource: effect.rawValue, withExtension: "wav"),
-              let player = try? AVAudioPlayer(contentsOf: url) else {
+        // Xcode hedefi dosyaları paketin köküne düz kopyalıyor, SPM ise
+        // Sounds/ klasörünü koruyabiliyor; iki yere de bakılıyor.
+        let url = bundle.url(forResource: effect.rawValue, withExtension: "wav")
+            ?? bundle.url(forResource: effect.rawValue, withExtension: "wav", subdirectory: "Sounds")
+        guard let url, let player = try? AVAudioPlayer(contentsOf: url) else {
             return nil
         }
         player.volume = effect.volume
