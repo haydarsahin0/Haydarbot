@@ -1,0 +1,229 @@
+name: iOS
+
+# Bu depoda Mac yok; derleme ve ekran görüntüleri GitHub'ın macOS makinelerinde
+# alınıyor. Depo herkese açık olduğu için bu makineler ücretsiz.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Derle
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ortam
+        run: |
+          xcodebuild -version
+          xcodebuild -list -project Gunluk.xcodeproj
+
+      - name: Derle (iOS Simulator)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Gunluk.xcodeproj \
+            -scheme Gunluk \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
+
+  playgrounds:
+    name: Swift Playgrounds sürümü
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Üretilen sürüm güncel mi
+        run: |
+          ./Tools/make-swiftpm.sh
+          if ! git diff --quiet -- Gunluk.swiftpm; then
+            echo "Gunluk.swiftpm kaynaklarla aynı değil. Yerelde"
+            echo "./Tools/make-swiftpm.sh çalıştırıp sonucu işleyin."
+            git diff --stat -- Gunluk.swiftpm
+            exit 1
+          fi
+          echo "Güncel."
+
+      - name: Derle
+        run: |
+          set -o pipefail
+          # Şema adı ürünün görünen adı değil, paketten türüyor. Sabit yazmak
+          # yerine listeden okunuyor ki adlandırma değişse de kırılmasın.
+          xcodebuild -list
+          SCHEME=$(xcodebuild -list -json | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          container = data.get('workspace') or data.get('project')
+          print(container['schemes'][0])
+          ")
+          echo "şema: $SCHEME"
+          xcodebuild build \
+            -scheme "$SCHEME" \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath /tmp/swiftpm-build \
+            CODE_SIGNING_ALLOWED=NO
+        working-directory: Gunluk.swiftpm
+
+      # Playgrounds sürümünde ses dosyaları Package.swift'te bildiriliyor;
+      # bildirimin gerçekten işe yaradığını derlenen pakete bakarak doğrula.
+      - name: Ses dosyaları pakete girdi mi
+        run: |
+          set -euo pipefail
+          APP=$(find /tmp/swiftpm-build/Build/Products -maxdepth 2 -name '*.app' | head -1)
+          echo "Uygulama: $APP"
+          missing=0
+          for name in page-turn-1 page-turn-2 page-turn-3 page-tap tick; do
+            if find "$APP" -name "$name.wav" | grep -q .; then
+              echo "var: $name.wav"
+            else
+              echo "EKSİK: $name.wav"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            find "$APP" -type f | head -60
+            exit 1
+          fi
+
+  screenshots:
+    name: Ekran görüntüsü
+    runs-on: macos-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Simülatör seç ve başlat
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          picked = ''
+          for runtime, devs in devices.items():
+              if 'iOS' not in runtime:
+                  continue
+              for dev in devs:
+                  if dev.get('isAvailable') and dev['name'].startswith('iPhone'):
+                      picked = dev['udid']
+          print(picked)
+          ")
+          if [ -z "$UDID" ]; then
+            echo 'Kullanılabilir iPhone simülatörü bulunamadı.'
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Simülatör için derle
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Gunluk.xcodeproj \
+            -scheme Gunluk \
+            -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+
+      # Eksik bir ses dosyası derlemeyi kırmaz, uygulama sadece sessiz kalır ve
+      # bu ekran görüntüsünden de anlaşılmaz. Paketin içine gerçekten
+      # girdiklerini burada doğruluyoruz.
+      - name: Ses dosyaları pakete girdi mi
+        run: |
+          set -euo pipefail
+          APP=$(find build/Build/Products/Debug-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
+          missing=0
+          for name in page-turn-1 page-turn-2 page-turn-3 page-tap tick; do
+            if find "$APP" -name "$name.wav" | grep -q .; then
+              echo "var: $name.wav"
+            else
+              echo "EKSİK: $name.wav"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Paketteki dosyalar:"
+            find "$APP" -maxdepth 2 -type f | head -60
+            exit 1
+          fi
+
+      - name: Kur, başlat ve görüntü al
+        run: |
+          set -euo pipefail
+          UDID="${{ steps.sim.outputs.udid }}"
+          APP=$(find build/Build/Products/Debug-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
+          echo "Uygulama: $APP"
+
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p screenshots
+
+          # Açık tema
+          xcrun simctl ui "$UDID" appearance light
+          xcrun simctl launch "$UDID" com.haydarsahin.gunluk
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshots/01-defter-acik-tema.png
+
+          # Koyu tema
+          xcrun simctl terminate "$UDID" com.haydarsahin.gunluk || true
+          xcrun simctl ui "$UDID" appearance dark
+          xcrun simctl launch "$UDID" com.haydarsahin.gunluk
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshots/02-defter-koyu-tema.png
+
+          # İngilizce: çeviri kataloğunun gerçekten derlemeye girdiğini
+          # doğrular. Katalog dahil edilmezse her şey sessizce Türkçe kalır
+          # ve bu ancak kullanıcı fark edince anlaşılır.
+          xcrun simctl terminate "$UDID" com.haydarsahin.gunluk || true
+          xcrun simctl ui "$UDID" appearance light
+          xcrun simctl launch "$UDID" com.haydarsahin.gunluk \
+            -AppleLanguages '(en)' -AppleLocale en_US
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshots/03-ingilizce.png
+
+      # Açılışta çökme, ekran görüntüsünde yalnızca ana ekran olarak görünüyor
+      # ve sessizce geçiyordu. Çökme raporu varsa iş kırmızıya dönsün.
+      - name: Çökme raporu var mı
+        run: |
+          set -uo pipefail
+          REPORTS=$(find ~/Library/Logs/DiagnosticReports -iname "*Gunluk*" 2>/dev/null || true)
+          if [ -n "$REPORTS" ]; then
+            echo "Uygulama açılışta çöktü:"
+            for r in $REPORTS; do
+              echo "----- $r -----"
+              head -60 "$r"
+            done
+            exit 1
+          fi
+          echo "Çökme raporu yok."
+
+      - name: Görüntüleri yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ekran-goruntuleri
+          path: screenshots/
+          if-no-files-found: warn
+
+      # Artifact'ı indirmek için GitHub arayüzüne girmek gerekiyor. Tasarımın
+      # doğru çıkıp çıkmadığını iş kaydından da görebilmek için küçültülmüş
+      # birer kopya base64 olarak buraya basılıyor.
+      - name: Görüntüleri iş kaydına bas
+        run: |
+          set -euo pipefail
+          for f in screenshots/*.png; do
+            name=$(basename "$f" .png)
+            sips -s format jpeg -s formatOptions 55 -Z 360 "$f" \
+              --out "/tmp/$name.jpg" >/dev/null
+            echo "===== GORUNTU BASLA $name.jpg ====="
+            base64 -i "/tmp/$name.jpg"
+            echo "===== GORUNTU BITIS $name.jpg ====="
+          done
