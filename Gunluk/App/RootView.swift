@@ -288,6 +288,7 @@ struct RootView: View {
         let target = min(max(SpreadIndex.spread(for: day), SpreadIndex.minSpread), SpreadIndex.maxSpread)
         guard target != spread else { return }
         Haptics.pageTurn()
+        SoundEffects.pageTurn()
         withAnimation(.easeInOut(duration: 0.28)) {
             spread = target
         }

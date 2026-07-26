@@ -114,6 +114,28 @@ jobs:
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO
 
+      # Eksik bir ses dosyası derlemeyi kırmaz, uygulama sadece sessiz kalır ve
+      # bu ekran görüntüsünden de anlaşılmaz. Paketin içine gerçekten
+      # girdiklerini burada doğruluyoruz.
+      - name: Ses dosyaları pakete girdi mi
+        run: |
+          set -euo pipefail
+          APP=$(find build/Build/Products/Debug-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
+          missing=0
+          for name in page-turn-1 page-turn-2 page-turn-3 page-tap tick; do
+            if find "$APP" -name "$name.wav" | grep -q .; then
+              echo "var: $name.wav"
+            else
+              echo "EKSİK: $name.wav"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Paketteki dosyalar:"
+            find "$APP" -maxdepth 2 -type f | head -60
+            exit 1
+          fi
+
       - name: Kur, başlat ve görüntü al
         run: |
           set -euo pipefail

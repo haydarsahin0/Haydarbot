@@ -15,6 +15,7 @@ struct SettingsView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var hapticsEnabled = Haptics.isEnabled
+    @State private var soundsEnabled = SoundEffects.isEnabled
     @State private var exportPayload: ExportPayload?
     @State private var showsPaywall = false
     @AppStorage("theme.preference") private var themePreference = ThemePreference.system.rawValue
@@ -198,6 +199,22 @@ struct SettingsView: View {
             .onChange(of: hapticsEnabled) { _, newValue in
                 Haptics.isEnabled = newValue
             }
+
+            Toggle(isOn: $soundsEnabled) {
+                Label("Ses efektleri", systemImage: "speaker.wave.2")
+            }
+            .tint(Theme.accent)
+            .onChange(of: soundsEnabled) { _, newValue in
+                SoundEffects.isEnabled = newValue
+                if newValue {
+                    SoundEffects.warmUp()
+                    SoundEffects.tap()
+                }
+            }
+
+            Text("Ses efektleri zil/sessiz anahtarına uyar ve çalan müziği kesmez.")
+                .font(.footnote)
+                .foregroundStyle(Theme.inkFaint)
         }
     }
 

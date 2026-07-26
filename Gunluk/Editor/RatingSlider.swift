@@ -216,12 +216,14 @@ struct RatingSlider: View {
         } else {
             Haptics.tick()
         }
+        SoundEffects.tick()
     }
 
     /// Parmak kalkınca: halka bir kez açılıp kayboluyor.
     private func land() {
         guard hasValue else { return }
         Haptics.tap()
+        SoundEffects.tap()
 
         pulse = 1
         pulseOpacity = 0.85

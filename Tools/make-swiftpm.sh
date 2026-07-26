@@ -28,6 +28,12 @@ mkdir -p "$OUT/Sources"
       cp "$SRC/$file" "$OUT/Sources/$file"
     done
 
+# Ses efektleri kod kaynağı değil ama uygulamanın çalışması için gerekiyor;
+# Package.swift'te .process("Sounds") olarak bildiriliyor ve kod bunlara
+# Bundle.module üzerinden erişiyor.
+mkdir -p "$OUT/Sources/Sounds"
+cp "$SRC/Resources/Sounds/"*.wav "$OUT/Sources/Sounds/"
+
 # Playgrounds'a özgü değişimler (şimdilik yalnızca CloudKit'in boş karşılığı).
 if [ -d "$OVERRIDES" ]; then
   ( cd "$OVERRIDES" && find . -name "*.swift" -print0 ) \
@@ -76,7 +82,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Gunluk",
-            path: "Sources"
+            path: "Sources",
+            resources: [
+                .process("Sounds")
+            ]
         )
     ]
 )

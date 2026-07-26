@@ -69,6 +69,8 @@ struct GunlukApp: App {
                 // Kayıtlardan silinmiş ama diskte kalmış fotoğrafları temizle.
                 photos.removeOrphans(keeping: store.allPhotoIDs)
                 voices.removeOrphans(keeping: store.allVoiceIDs)
+                // Ses dosyalarını önden çöz; ilk sayfa çevirişi sessiz kalmasın.
+                SoundEffects.warmUp()
                 // Hatırlatma açıksa saati her açılışta tazele; sistem
                 // güncellemeleri sonrası zamanlama düşmüş olabiliyor.
                 if reminders.isEnabled {

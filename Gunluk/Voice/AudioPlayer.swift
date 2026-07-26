@@ -13,6 +13,9 @@ final class AudioPlayer: NSObject, ObservableObject {
 
     private var player: AVAudioPlayer?
     private var timer: Timer?
+    /// Efektler susturulduysa `stop()` bunu geri almalı; `play()` ve `stop()`
+    /// her sırada çağrılabildiği için askı durumu burada takip ediliyor.
+    private var didSuspendEffects = false
 
     func toggle(id: String, url: URL) {
         if playingID == id {
@@ -26,6 +29,10 @@ final class AudioPlayer: NSObject, ObservableObject {
         stop()
         guard FileManager.default.fileExists(atPath: url.path) else { return }
 
+        // Efektler oturumu `.ambient`'a çekiyor; kayıt çalarken sussunlar.
+        SoundEffects.suspend()
+        didSuspendEffects = true
+
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .spokenAudio)
@@ -33,9 +40,13 @@ final class AudioPlayer: NSObject, ObservableObject {
 
             let player = try AVAudioPlayer(contentsOf: url)
             player.delegate = self
-            guard player.play() else { return }
+            guard player.play() else {
+                releaseEffects()
+                return
+            }
             self.player = player
         } catch {
+            releaseEffects()
             return
         }
 
@@ -53,6 +64,13 @@ final class AudioPlayer: NSObject, ObservableObject {
         playingID = nil
         progress = 0
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        releaseEffects()
+    }
+
+    private func releaseEffects() {
+        guard didSuspendEffects else { return }
+        didSuspendEffects = false
+        SoundEffects.resume()
     }
 
     private func startTimer() {

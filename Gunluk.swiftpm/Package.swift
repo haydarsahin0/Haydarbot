@@ -36,7 +36,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Gunluk",
-            path: "Sources"
+            path: "Sources",
+            resources: [
+                .process("Sounds")
+            ]
         )
     ]
 )

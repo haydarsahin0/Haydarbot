@@ -63,6 +63,7 @@ struct TrendsView: View {
                             selectedQuestion = question
                         }
                         Haptics.tap()
+                        SoundEffects.tap()
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: question.symbol)

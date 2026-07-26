@@ -8076,6 +8076,196 @@
         }
       }
     },
+    "Ses efektleri": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المؤثرات الصوتية"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soundeffekte"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound effects"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efectos de sonido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effets sonores"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ध्वनि प्रभाव"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efek suara"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effetti sonori"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サウンドエフェクト"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사운드 효과"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geluidseffecten"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efekty dźwiękowe"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efeitos sonoros"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Звуковые эффекты"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音效"
+          }
+        }
+      }
+    },
+    "Ses efektleri zil/sessiz anahtarına uyar ve çalan müziği kesmez.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تتبع المؤثرات الصوتية مفتاح الرنين/الصامت ولا تقاطع الموسيقى قيد التشغيل."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soundeffekte folgen dem Klingel-/Stummschalter und unterbrechen laufende Musik nicht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound effects follow the Ring/Silent switch and won’t interrupt music that’s playing."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los efectos de sonido siguen el interruptor de timbre/silencio y no interrumpen la música que estés escuchando."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les effets sonores suivent le bouton Sonnerie/Silence et n’interrompent pas la musique en cours."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ध्वनि प्रभाव रिंग/साइलेंट स्विच का पालन करते हैं और चल रहे संगीत को बाधित नहीं करते।"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efek suara mengikuti tombol Dering/Senyap dan tidak akan menghentikan musik yang sedang diputar."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gli effetti sonori seguono l’interruttore Suoneria/Silenzioso e non interrompono la musica in riproduzione."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サウンドエフェクトは着信/消音スイッチに従い、再生中の音楽を止めません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사운드 효과는 벨소리/무음 스위치를 따르며 재생 중인 음악을 끊지 않습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geluidseffecten volgen de bel-/stilschakelaar en onderbreken lopende muziek niet."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efekty dźwiękowe podlegają przełącznikowi dzwonek/cisza i nie przerywają odtwarzanej muzyki."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os efeitos sonoros seguem o botão Toque/Silencioso e não interrompem a música que está tocando."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Звуковые эффекты подчиняются переключателю «Звонок/Бесшумно» и не прерывают воспроизводимую музыку."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音效遵循响铃/静音开关，且不会打断正在播放的音乐。"
+          }
+        }
+      }
+    },
     "Ses kaydı başlat": {
       "extractionState": "manual",
       "localizations": {

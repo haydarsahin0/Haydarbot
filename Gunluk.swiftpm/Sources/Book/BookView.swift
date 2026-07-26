@@ -274,6 +274,7 @@ struct BookView: View {
     private func select(day: Int, side: PageSide) {
         guard turn == 0, !isAnimating else { return }
         Haptics.tap()
+        SoundEffects.tap()
         onSelectDay(day, side)
     }
 
@@ -341,6 +342,7 @@ struct BookView: View {
 
         isAnimating = true
         Haptics.pageTurn()
+        SoundEffects.pageTurn()
 
         withAnimation(.spring(response: response, dampingFraction: 0.92), completionCriteria: .logicallyComplete) {
             turn = target
@@ -372,6 +374,7 @@ struct BookView: View {
 
         isAnimating = true
         Haptics.pageTurn()
+        SoundEffects.pageTurn()
 
         withAnimation(.spring(response: 0.52, dampingFraction: 0.9), completionCriteria: .logicallyComplete) {
             turn = forward ? 1 : -1

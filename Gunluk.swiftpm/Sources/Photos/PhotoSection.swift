@@ -110,6 +110,7 @@ struct PhotoSection: View {
         HStack(spacing: 10) {
             Button {
                 Haptics.tap()
+                SoundEffects.tap()
                 showsCamera = true
             } label: {
                 actionLabel(symbol: "camera.fill", title: "Çek")
@@ -181,6 +182,7 @@ struct PhotoSection: View {
         }
         photos.delete(id)
         Haptics.tap()
+        SoundEffects.tap()
     }
 }
 

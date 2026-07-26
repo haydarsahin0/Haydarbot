@@ -159,6 +159,7 @@ struct VoiceSection: View {
         }
         voices.delete(note.id)
         Haptics.tap()
+        SoundEffects.tap()
     }
 
     private func timeText(_ seconds: TimeInterval) -> String {

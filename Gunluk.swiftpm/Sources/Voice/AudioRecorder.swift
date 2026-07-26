@@ -45,6 +45,9 @@ final class AudioRecorder: NSObject, ObservableObject {
         guard !isRecording else { return false }
         guard await requestPermission() else { return false }
 
+        // Efektler oturum kategorisini değiştiriyor; kayıt boyunca sussunlar.
+        SoundEffects.suspend()
+
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playAndRecord,
@@ -52,6 +55,7 @@ final class AudioRecorder: NSObject, ObservableObject {
                                     options: [.defaultToSpeaker, .allowBluetooth])
             try session.setActive(true)
         } catch {
+            SoundEffects.resume()
             return false
         }
 
@@ -65,9 +69,13 @@ final class AudioRecorder: NSObject, ObservableObject {
         do {
             let recorder = try AVAudioRecorder(url: url, settings: settings)
             recorder.isMeteringEnabled = true
-            guard recorder.record() else { return false }
+            guard recorder.record() else {
+                SoundEffects.resume()
+                return false
+            }
             self.recorder = recorder
         } catch {
+            SoundEffects.resume()
             return false
         }
 
@@ -92,6 +100,7 @@ final class AudioRecorder: NSObject, ObservableObject {
         self.recorder = nil
         isRecording = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        SoundEffects.resume()
 
         guard duration >= 0.6 else {
             try? FileManager.default.removeItem(at: url)
@@ -113,6 +122,7 @@ final class AudioRecorder: NSObject, ObservableObject {
         isRecording = false
         try? FileManager.default.removeItem(at: url)
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        SoundEffects.resume()
     }
 
     // MARK: - Seviye örnekleme
